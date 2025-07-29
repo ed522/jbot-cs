@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("jbot-cs")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9f175b6f70de65ab7fd7769b8e803c46da30046d")]
 [assembly: System.Reflection.AssemblyProductAttribute("jbot-cs")]
 [assembly: System.Reflection.AssemblyTitleAttribute("jbot-cs")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
