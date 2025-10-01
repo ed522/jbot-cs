@@ -52,6 +52,9 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
     private ulong[] largeEntries;
     private T[] possibleValues;
 
+    private readonly bool isReadOnly;
+    private readonly EnumSet<T>? parent;
+
     private void SetEntry(T value)
     {
         // find the value
@@ -131,44 +134,62 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
         // Else make it 0 entries long.
         else largeEntries = [];
 
+        // normal set
+        isReadOnly = false;
+        parent = null;
+    }
+    private EnumSet(EnumSet<T> parent)
+    {
+        this.largeEntries = [];
+        this.possibleValues = [];
+        this.entries = 0;
+        this.isReadOnly = true;
+        this.parent = parent;
     }
 
     public int Count
     {
         get
         {
-            // check word size
-            if (nuint.MaxValue == 0xFF_FF_FF_FF)
+            if (!isReadOnly)
             {
-                if (largeEntries.Length == 0)
-                    return BitOperations.PopCount(entries & 0xFFFFFFFF)
-                        + BitOperations.PopCount((entries >> 32) & 0xFFFFFFFF);
+                // check word size
+                if (nuint.MaxValue == 0xFF_FF_FF_FF)
+                {
+                    if (largeEntries.Length == 0)
+                        return BitOperations.PopCount(entries & 0xFFFFFFFF)
+                            + BitOperations.PopCount((entries >> 32) & 0xFFFFFFFF);
+                    else
+                    {
+                        int val = 0;
+                        foreach (ulong i in largeEntries)
+                        {
+                            val += BitOperations.PopCount(i & 0xFFFFFFFF)
+                                + BitOperations.PopCount((i >> 32) & 0xFFFFFFFF);
+                        }
+                        return val;
+                    }
+                }
                 else
                 {
-                    int val = 0;
-                    foreach (ulong i in largeEntries)
+                    if (largeEntries.Length == 0)
                     {
-                        val += BitOperations.PopCount(i & 0xFFFFFFFF)
-                            + BitOperations.PopCount((i >> 32) & 0xFFFFFFFF);
+                        return BitOperations.PopCount(entries);
                     }
-                    return val;
+                    else
+                    {
+                        int val = 0;
+                        foreach (ulong i in largeEntries)
+                        {
+                            val += BitOperations.PopCount(i);
+                        }
+                        return val;
+                    }
                 }
             }
             else
             {
-                if (largeEntries.Length == 0)
-                {
-                    return BitOperations.PopCount(entries);
-                }
-                else
-                {
-                    int val = 0;
-                    foreach (ulong i in largeEntries)
-                    {
-                        val += BitOperations.PopCount(i);
-                    }
-                    return val;
-                }
+                return parent!.Count;
             }
         }
     }
@@ -177,27 +198,42 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
     public bool Add(T item)
     {
-        bool alreadyHad = GetEntry(item);
-        SetEntry(item);
-        return !alreadyHad;
+        if (!isReadOnly)
+        {
+            bool alreadyHad = GetEntry(item);
+            SetEntry(item);
+            return !alreadyHad;
+        }
+        else
+        {
+            return parent!.Add(item);
+        }
     }
 
     public void Clear()
     {
-        if (largeEntries.Length != 0)
+        if (isReadOnly)
         {
-            int len = largeEntries.Length;
-            largeEntries = new ulong[len];
+            if (largeEntries.Length != 0)
+            {
+                int len = largeEntries.Length;
+                largeEntries = new ulong[len];
+            }
+            else
+            {
+                entries = 0;
+            }
         }
         else
         {
-            entries = 0;
+            parent!.Clear();
         }
     }
 
     public bool Contains(T item)
     {
-        return GetEntry(item);
+        if (!isReadOnly) return GetEntry(item);
+        else return parent!.Contains(item);
     }
 
     public void CopyTo(T[] array, int arrayIndex)
@@ -220,7 +256,6 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
     public IEnumerator<T> GetEnumerator()
     {
-        // TODO implement
         return new EnumSetEnumerator(this);
     }
 
@@ -271,9 +306,16 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
     public bool Remove(T item)
     {
-        bool had = this.GetEntry(item);
-        this.UnsetEntry(item);
-        return had;
+        if (!isReadOnly)
+        {
+            bool had = this.GetEntry(item);
+            this.UnsetEntry(item);
+            return had;
+        }
+        else
+        {
+            return parent!.Remove(item);
+        }
     }
 
     public bool SetEquals(IEnumerable<T> other)
@@ -313,6 +355,15 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    public EnumSet<T> AsReadOnly()
+    {
+        // turns out, it does change semantics
+        // this constructor is specific
+        #pragma warning disable IDE0028 // Simplify collection initialization
+        return new EnumSet<T>(this);
+        #pragma warning restore IDE0028 // Simplify collection initialization
     }
     
 }
