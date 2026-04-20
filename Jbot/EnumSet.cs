@@ -1,24 +1,24 @@
 using System.Collections;
 using System.Numerics;
+using System.Text;
 
 namespace Jbot;
 
 public class EnumSet<T> : ISet<T> where T : struct, Enum
 {
-
     private class EnumSetEnumerator : IEnumerator<T>
     {
-        // undefined if index == -1 -> past end of list
-        public T Current => index != -1 ? reference.possibleValues[index] : default;
+        public T Current => (index >= 0 && index < reference.possibleValues.Length) 
+            ? reference.possibleValues[index] 
+            : default;
+
         private readonly EnumSet<T> reference;
         object IEnumerator.Current => Current;
-        private int index = 0;
+        private int index = -1;
 
         public EnumSetEnumerator(EnumSet<T> reference)
         {
             this.reference = reference;
-            // scan through to first entry
-            while (!reference.Contains(reference.possibleValues[index])) index++;
         }
 
         public void Dispose()
@@ -28,23 +28,17 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
         public bool MoveNext()
         {
-            try
+            while (++index < reference.possibleValues.Length)
             {
-                do index++;
-                while (!reference.Contains(reference.possibleValues[index]));
-                return true;
+                if (reference.Contains(reference.possibleValues[index]))
+                    return true;
             }
-            catch (IndexOutOfRangeException)
-            {
-                index = -1;
-                return false;
-            }
+            return false;
         }
 
         public void Reset()
         {
-            index = 0;
-            while (!reference.Contains(reference.possibleValues[index])) index++;
+            index = -1;
         }
     }
 
@@ -52,139 +46,26 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
     private ulong[] largeEntries;
     private T[] possibleValues;
 
-    private readonly bool isReadOnly;
     private readonly EnumSet<T>? parent;
-
-    private void SetEntry(T value)
-    {
-        // find the value
-        int index = possibleValues
-            .AsParallel()
-            .Where(t => t.Equals(value))
-            .Index().First().Index;
-
-        // check which one to use
-        if (largeEntries.Length != 0)
-        {
-            // Large array created, so we should use it.
-            // Get offsets and shift a value in
-            int arrayIndex = index / sizeof(ulong); // rounding down
-            int bitIndex = index % sizeof(ulong);
-            largeEntries[arrayIndex] |= (ushort)(0x1 << bitIndex);
-        }
-        else
-        {
-            // Use the single integer.
-            entries |= (ushort)(0x1 << index);
-        }
-    }
-    private bool GetEntry(T value)
-    {
-        // find the value
-        int index = possibleValues
-            .AsParallel()
-            .Where(t => t.Equals(value))
-            .Index().First().Index;
-
-        if (largeEntries.Length != 0)
-        {
-            // as above
-            int arrayIndex = index / sizeof(ulong); // rounding down
-            int bitIndex = index % sizeof(ulong);
-            return (largeEntries[arrayIndex] & (ushort)(0x1 << bitIndex)) != 0;
-        }
-        else
-        {
-            return (entries & (ushort)(0x1 << index)) != 0;
-        }
-    }
-    private void UnsetEntry(T value)
-    {
-        // find the value
-        int index = possibleValues
-            .AsParallel()
-            .Where(t => t.Equals(value))
-            .Index().First().Index;
-
-        // check which one to use
-        if (largeEntries.Length != 0)
-        {
-            int arrayIndex = index / sizeof(ulong); // rounding down
-            int bitIndex = index % sizeof(ulong);
-            // mask out
-            largeEntries[arrayIndex] &= (ushort)~(0x1 << bitIndex);
-        }
-        else
-        {
-            // mask out the entry to remove
-            entries &= (ushort)~(0x1 << index);
-        }
-    }
-    public EnumSet()
-    {
-        // Look up all of the values we could hold to speed up some computation
-        possibleValues = Enum.GetValues<T>();
-
-        // If there are 64 or fewer entries, we can use a single ulong.
-        // If there are more than that, we need the array.
-
-        // If (len) is greater than ulong size (* 8, bytes to bits), use the largeEntries array.
-        if (possibleValues.Length > sizeof(ulong) * 8)
-            largeEntries = new ulong[possibleValues.Length / (sizeof(ulong) * 8)];
-        // Else make it 0 entries long.
-        else largeEntries = [];
-
-        // normal set
-        isReadOnly = false;
-        parent = null;
-    }
-    private EnumSet(EnumSet<T> parent)
-    {
-        this.largeEntries = [];
-        this.possibleValues = [];
-        this.entries = 0;
-        this.isReadOnly = true;
-        this.parent = parent;
-    }
-
+    public bool IsReadOnly { get; private set; }
     public int Count
     {
         get
         {
-            if (!isReadOnly)
+            if (!IsReadOnly)
             {
-                // check word size
-                if (nuint.MaxValue == 0xFF_FF_FF_FF)
+                if (largeEntries.Length == 0)
                 {
-                    if (largeEntries.Length == 0)
-                        return BitOperations.PopCount(entries & 0xFFFFFFFF)
-                            + BitOperations.PopCount((entries >> 32) & 0xFFFFFFFF);
-                    else
-                    {
-                        int val = 0;
-                        foreach (ulong i in largeEntries)
-                        {
-                            val += BitOperations.PopCount(i & 0xFFFFFFFF)
-                                + BitOperations.PopCount((i >> 32) & 0xFFFFFFFF);
-                        }
-                        return val;
-                    }
+                    return BitOperations.PopCount(entries);
                 }
                 else
                 {
-                    if (largeEntries.Length == 0)
+                    int val = 0;
+                    foreach (ulong i in largeEntries)
                     {
-                        return BitOperations.PopCount(entries);
+                        val += BitOperations.PopCount(i);
                     }
-                    else
-                    {
-                        int val = 0;
-                        foreach (ulong i in largeEntries)
-                        {
-                            val += BitOperations.PopCount(i);
-                        }
-                        return val;
-                    }
+                    return val;
                 }
             }
             else
@@ -194,11 +75,81 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
         }
     }
 
-    public bool IsReadOnly => false;
+    private void SetEntry(T value)
+    {
+        int index = Array.IndexOf(possibleValues, value);
+        if (index == -1) return;
+
+        if (largeEntries.Length != 0)
+        {
+            int arrayIndex = index / 64;
+            int bitIndex = index % 64;
+            largeEntries[arrayIndex] |= (1UL << bitIndex);
+        }
+        else
+        {
+            entries |= (1UL << index);
+        }
+    }
+
+    private bool GetEntry(T value)
+    {
+        int index = Array.IndexOf(possibleValues, value);
+        if (index == -1) return false;
+
+        if (largeEntries.Length != 0)
+        {
+            int arrayIndex = index / 64;
+            int bitIndex = index % 64;
+            return (largeEntries[arrayIndex] & (1UL << bitIndex)) != 0;
+        }
+        else
+        {
+            return (entries & (1UL << index)) != 0;
+        }
+    }
+
+    private void UnsetEntry(T value)
+    {
+        int index = Array.IndexOf(possibleValues, value);
+        if (index == -1) return;
+
+        if (largeEntries.Length != 0)
+        {
+            int arrayIndex = index / 64;
+            int bitIndex = index % 64;
+            largeEntries[arrayIndex] &= ~(1UL << bitIndex);
+        }
+        else
+        {
+            entries &= ~(1UL << index);
+        }
+    }
+
+    public EnumSet()
+    {
+        possibleValues = Enum.GetValues<T>();
+
+        if (possibleValues.Length > 64)
+            largeEntries = new ulong[(possibleValues.Length + 63) / 64];
+        else 
+            largeEntries = [];
+
+        IsReadOnly = false;
+        parent = null;
+    }
+    private EnumSet(EnumSet<T> parent)
+    {
+        this.largeEntries = [];
+        this.possibleValues = [];
+        this.entries = 0;
+        this.IsReadOnly = true;
+        this.parent = parent;
+    }
 
     public bool Add(T item)
     {
-        if (!isReadOnly)
+        if (!IsReadOnly)
         {
             bool alreadyHad = GetEntry(item);
             SetEntry(item);
@@ -212,27 +163,21 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
     public void Clear()
     {
-        if (isReadOnly)
+        if (IsReadOnly) throw new NotSupportedException("Set is read-only.");
+        
+        if (largeEntries.Length != 0)
         {
-            if (largeEntries.Length != 0)
-            {
-                int len = largeEntries.Length;
-                largeEntries = new ulong[len];
-            }
-            else
-            {
-                entries = 0;
-            }
+            Array.Clear(largeEntries);
         }
         else
         {
-            parent!.Clear();
+            entries = 0;
         }
     }
 
     public bool Contains(T item)
     {
-        if (!isReadOnly) return GetEntry(item);
+        if (!IsReadOnly) return GetEntry(item);
         else return parent!.Contains(item);
     }
 
@@ -306,7 +251,7 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
     public bool Remove(T item)
     {
-        if (!isReadOnly)
+        if (!IsReadOnly)
         {
             bool had = this.GetEntry(item);
             this.UnsetEntry(item);
@@ -359,11 +304,27 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
     public EnumSet<T> AsReadOnly()
     {
-        // turns out, it does change semantics
-        // this constructor is specific
         #pragma warning disable IDE0028 // Simplify collection initialization
         return new EnumSet<T>(this);
         #pragma warning restore IDE0028 // Simplify collection initialization
+    }
+
+    /// <summary>
+    /// Creates a string representation of this object (a list of each individual entry).
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+        StringBuilder builder = new();
+        builder.Append('{');
+
+        foreach (T t in this)
+        {
+            builder.Append(t.ToString());
+            builder.Append(',');
+        }
+        builder[^1] = '}'; // replace last comma
+        return builder.ToString();
     }
     
 }
