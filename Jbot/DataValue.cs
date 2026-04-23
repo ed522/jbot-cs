@@ -2,13 +2,6 @@ using System.Numerics;
 
 namespace Jbot;
 
-public enum DataType
-{
-    NULL, OBJECT, ARRAY, BINARY, STRING, BOOLEAN,
-    BYTE, SHORT, INT, LONG, UBYTE, UINT, USHORT, ULONG,
-    FLOAT, DOUBLE, DECIMAL, BIGINT
-}
-
 public class DataValue
 {
     protected object? Value { get; set; }
@@ -164,5 +157,10 @@ public class DataValue
     public double? GetAsDouble() => this.Value as double?;
     public decimal? GetAsDecimal() => this.Value as decimal?;
     public BigInteger? GetAsBigInteger() => this.Value as BigInteger?;
+
+    public override string ToString()
+    {
+        return $"{this.Type}: {this.Value}";
+    }
 
 }

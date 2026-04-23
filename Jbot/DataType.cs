@@ -1,0 +1,8 @@
+namespace Jbot;
+
+public enum DataType
+{
+    NULL, OBJECT, ARRAY, BINARY, STRING, BOOLEAN,
+    BYTE, SHORT, INT, LONG, UBYTE, UINT, USHORT, ULONG,
+    FLOAT, DOUBLE, DECIMAL, BIGINT
+}
