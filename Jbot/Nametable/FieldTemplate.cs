@@ -1,16 +1,25 @@
 namespace Jbot.Nametable;
 
-public class FieldTemplate
+public class FieldTemplate()
 {
-    public EnumSet<DataType> AllowableTypes { get; private init; }
-    public string Name { get; private init; }
-    public ushort Id { get; private init; }
+    public required EnumSet<DataType> AllowableTypes { get; init; }
+    public required string Name { get; init; }
+    public required ushort Id { get; init; }
+    public IList<string>? BoundMembers { get; init; }
+    public IList<string>? AllowedObjects { get; init; }
+    public required bool UseCompression { get; init; }
 
-    public FieldTemplate(ushort id, string name, DataType[] allowableTypes)
+    public FieldTemplate(
+        ushort id, string name, DataType[] allowableTypes, 
+        string[]? boundMembers, string[]? allowedObjects, bool useCompression
+    ): this()
     {
-        Id = id;
+        AllowableTypes = ((EnumSet<DataType>) [..allowableTypes]).AsReadOnly();
         Name = name;
-        AllowableTypes = [..allowableTypes];
+        Id = id;
+        BoundMembers = boundMembers?.AsReadOnly();
+        AllowedObjects = allowedObjects?.AsReadOnly();
+        UseCompression = useCompression;
     }
 
     public bool AllowsType(DataType type)

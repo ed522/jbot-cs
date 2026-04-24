@@ -1,0 +1,24 @@
+attrib nocrc nocompress;
+
+version 1;
+
+object ObjectWithoutId {
+    attrib short;
+    bind Example.ObjectWithoutId;
+
+    field field_no_id $FieldNoId $fieldNoId type INT64,UINT64 nullable;
+    field field_with_id #1234 $FieldWithId $fieldWithId type INT64,UINT64;
+    field long_field {
+        type OBJECT;
+        attrib nullable;
+        allows ObjectWithoutId, ObjectWithId;
+        bind $LongField $longField;
+    }
+    field short_obj #65535 $ShortField type OBJECT allows ObjectWithId nullable;
+}
+
+object ObjectWithId #1000 {
+    bind Example.ObjectWithId;
+
+    field some-_field39 $someField $SomeField type ANY;
+}

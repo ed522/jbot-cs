@@ -7,7 +7,7 @@ public class DataValue
     protected object? Value { get; set; }
     public virtual DataType Type { get; protected set; }
 
-    public bool IsOfType(DataType type) => Type.Equals(type);
+    public bool IsOfType(DataType type) => Type == type;
 
     // lots of repetitive definitions
     public DataValue() => this.SetNull();
@@ -31,96 +31,96 @@ public class DataValue
 
     public void SetNull()
     {
-        this.Value = null;
         this.Type = DataType.NULL;
+        this.Value = null;
     }
     public void Set(DataObject value)
     {
-        this.Value = value;
         this.Type = DataType.OBJECT;
+        this.Value = value;
     }
     public void Set(DataArray value)
     {
-        this.Value = value;
         this.Type = DataType.ARRAY;
+        this.Value = value;
     }
     public void Set(byte[] value)
     {
-        this.Value = value;
         this.Type = DataType.BINARY;
+        this.Value = value;
     }
     public void Set(string value)
     {
-        this.Value = value;
         this.Type = DataType.STRING;
+        this.Value = value;
     }
     public void Set(bool value)
     {
-        this.Value = value;
         this.Type = DataType.BOOLEAN;
+        this.Value = value;
     }
     public void Set(sbyte value)
     {
-        this.Value = value;
         this.Type = DataType.BYTE;
+        this.Value = value;
     }
     public void Set(short value)
     {
-        this.Value = value;
         this.Type = DataType.SHORT;
+        this.Value = value;
     }
     public void Set(int value)
     {
-        this.Value = value;
         this.Type = DataType.INT;
+        this.Value = value;
     }
     public void Set(long value)
     {
-        this.Value = value;
         this.Type = DataType.LONG;
+        this.Value = value;
     }
     public void Set(byte value)
     {
-        this.Value = value;
         this.Type = DataType.UBYTE;
+        this.Value = value;
     }
     public void Set(ushort value)
     {
-        this.Value = value;
         this.Type = DataType.USHORT;
+        this.Value = value;
     }
     public void Set(uint value)
     {
-        this.Value = value;
         this.Type = DataType.UINT;
+        this.Value = value;
     }
     public void Set(ulong value)
     {
-        this.Value = value;
         this.Type = DataType.ULONG;
+        this.Value = value;
     }
     public void Set(float value)
     {
-        this.Value = value;
         this.Type = DataType.FLOAT;
+        this.Value = value;
     }
     public void Set(double value)
     {
-        this.Value = value;
         this.Type = DataType.DOUBLE;
+        this.Value = value;
     }
     public void Set(decimal value)
     {
-        this.Value = value;
         this.Type = DataType.DECIMAL;
+        this.Value = value;
     }
     public void Set(BigInteger value)
     {
-        this.Value = value;
         this.Type = DataType.BIGINT;
+        this.Value = value;
     }
 
-    public bool IsNull() => this.Value == null;
+    public bool IsNull() => this.Value is null;
 
     public DataObject? GetObject() => (DataObject?)this.Value;
     public DataArray? GetArray() => (DataArray?)this.Value;
