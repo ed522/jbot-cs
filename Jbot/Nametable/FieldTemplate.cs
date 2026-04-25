@@ -1,3 +1,6 @@
+using Jbot.Data;
+using Jbot.Utils;
+
 using JetBrains.Annotations;
 
 namespace Jbot.Nametable;

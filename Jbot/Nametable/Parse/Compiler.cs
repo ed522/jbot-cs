@@ -1,3 +1,5 @@
+using Jbot.Data;
+
 namespace Jbot.Nametable.Parse;
 
 internal static class Compiler

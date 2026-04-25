@@ -1,4 +1,4 @@
-namespace Jbot;
+namespace Jbot.Data;
 
 public enum DataType
 {

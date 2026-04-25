@@ -1,11 +1,13 @@
 ﻿using System.IO.Hashing;
 using System.Text;
 
+using Jbot.Data;
+using Jbot.Nametable;
 using Jbot.Utils;
 
 using JetBrains.Annotations;
 
-namespace Jbot.Nametable;
+namespace Jbot.IO;
 
 [PublicAPI]
 public class NametableCodec
@@ -67,7 +69,7 @@ public class NametableCodec
     //   - x bytes - allowed object name
     // - byte: field end
 
-    private static uint MakeNametableFlags(Nametable nametable) =>
+    private static uint MakeNametableFlags(Nametable.Nametable nametable) =>
         (nametable.UsesShortIds ? NT_USES_SHORT_IDS : 0u) |
         (nametable.AllowsCompression ? NT_ALLOWS_COMPRESSION : 0u) |
         (nametable.UsesChecksum ? NT_USES_CHECKSUM : 0u);
@@ -272,7 +274,7 @@ public class NametableCodec
         return new ObjectTemplate(id, name, boundTypeNames, fields, useCompression, usesShortIds);
     }
 
-    public static byte[] Serialize(Nametable nametable)
+    public static byte[] Serialize(Nametable.Nametable nametable)
     {
         MemoryStream stream = new(WRITE_BUFFER_SIZE_INITIAL);
 
@@ -301,7 +303,7 @@ public class NametableCodec
         return stream.ToArray();
     }
 
-    public static Nametable Deserialize(byte[] data)
+    public static Nametable.Nametable Deserialize(byte[] data)
     {
         if (data.Length < 8) // XxHash size
         {
@@ -342,13 +344,13 @@ public class NametableCodec
             objects[i] = ReadObject(reader);
         }
 
-        return new Nametable(objects, version, allowsCompression, usesChecksum, usesShortIds);
+        return new Nametable.Nametable(objects, version, allowsCompression, usesChecksum, usesShortIds);
     }
 
-    public static void WriteFile(string file, Nametable nametable)
+    public static void WriteFile(string file, Nametable.Nametable nametable)
     {
         File.WriteAllBytes(file, Serialize(nametable));
     }
 
-    public static Nametable ReadFile(string file) => Deserialize(File.ReadAllBytes(file));
+    public static Nametable.Nametable ReadFile(string file) => Deserialize(File.ReadAllBytes(file));
 }

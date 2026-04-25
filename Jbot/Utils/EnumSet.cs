@@ -2,7 +2,7 @@ using System.Collections;
 using System.Numerics;
 using System.Text;
 
-namespace Jbot;
+namespace Jbot.Utils;
 
 public class EnumSet<T> : ISet<T> where T : struct, Enum
 {

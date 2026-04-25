@@ -1,3 +1,3 @@
-namespace Jbot;
+namespace Jbot.Data;
 
 public class DataArray { }

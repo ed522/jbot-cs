@@ -2,7 +2,7 @@ using System.Numerics;
 
 using JetBrains.Annotations;
 
-namespace Jbot;
+namespace Jbot.Data;
 
 [PublicAPI]
 public class DataValue
