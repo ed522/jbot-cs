@@ -72,6 +72,14 @@ internal static class Compiler
                 InvalidState(node);
             }
 
+            ObjectAttribute attrib = Attributes.ParseObjectAttribute(node.Value);
+
+            if (attributes.Contains(attrib))
+            {
+                throw new InvalidDocumentException("already defined attribute " +
+                                                   Attributes.GetName(attrib));
+            }
+
             attributes.Add(Attributes.ParseObjectAttribute(node.Value));
         }
 
@@ -87,6 +95,14 @@ internal static class Compiler
             if (node.Type != NodeType.FIELD_ATTRIBUTE)
             {
                 InvalidState(node);
+            }
+
+            FieldAttribute attrib = Attributes.ParseFieldAttribute(node.Value);
+
+            if (attributes.Contains(attrib))
+            {
+                throw new InvalidDocumentException("already defined attribute " +
+                                                   Attributes.GetName(attrib));
             }
 
             attributes.Add(Attributes.ParseFieldAttribute(node.Value));
