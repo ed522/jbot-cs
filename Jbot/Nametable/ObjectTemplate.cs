@@ -12,7 +12,8 @@ public class ObjectTemplate
 
     // all of this is to allow compilation without actually resolving a target type
     // so AoT in a sandbox works, and so it doesn't always need to re-resolve the type
-    // BoundTypeName is always nonnull if BoundType is nonnull, but deferred resolution can make Type null and string not
+    // BoundTypeNames is always nonnull if _boundType is nonnull, but deferred resolution can make
+    // Type null and string not
     public string[]? BoundTypeNames { get; private init; } = null;
     private Type? _boundType = null;
 
