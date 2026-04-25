@@ -1,6 +1,6 @@
 namespace Jbot.Nametable.Parse;
 
-public class FieldTemplateBuilder
+internal class FieldTemplateBuilder
 {
     public EnumSet<DataType>? AllowableTypes { get; set; }
     public List<string>? AllowedObjects { get; set; }
