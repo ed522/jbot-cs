@@ -14,9 +14,8 @@ internal static partial class Lexer
 
     private static readonly string[] BREAKING_SYMBOLS = 
         [BLOCK_START, BLOCK_END, STATEMENT_END, DECL_ID, TYPE_SEPARATOR, DECL_FIELD_BIND];
-
-
-    public static string[] Scan(string input)
+    
+    private static string[] Scan(string input)
     {
         List<string> tokens = [];
         StringBuilder currentToken = new();
@@ -30,7 +29,7 @@ internal static partial class Lexer
                 if (currentToken.Length > 0)
                 {
                     tokens.Add(currentToken.ToString());
-                    currentToken = new();
+                    currentToken = new StringBuilder();
                 }
                 if (BREAKING_SYMBOLS.Contains($"{currentChar}"))
                 {
@@ -51,7 +50,7 @@ internal static partial class Lexer
         return [..tokens];
     }
 
-    public static Symbol Evaluate(string token)
+    private static Symbol Evaluate(string token)
     {
         switch (token)
         {
@@ -90,12 +89,8 @@ internal static partial class Lexer
 
     public static Symbol[] Parse(string str)
     {
-        List<Symbol> symbols = [];
-        foreach (string token in Scan(str))
-        {
-            symbols.Add(Evaluate(token));
-        }
-        return [..symbols];
+        // tersely: splits the string, then for each token, evaluates it (makes it a symbol)
+        return [..Scan(str).Select(Evaluate)];
     }
 
     [GeneratedRegex("[a-zA-Z_]+")]
