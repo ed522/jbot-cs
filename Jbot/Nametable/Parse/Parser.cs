@@ -46,7 +46,7 @@ internal class Parser(Symbol[] symbols)
     {
         if (!this.Accept(type))
         {
-            throw new SyntaxException("expected " + type + ", got " + this.Peek().type);
+            throw new SyntaxException("expected " + type);
         }
     }
 
@@ -82,7 +82,7 @@ internal class Parser(Symbol[] symbols)
     private void DocumentAttributeDeclaration()
     {
         // looks like: `attrib attr1 [attr2...] ;`
-        Node attributeNode = GetSetIfExists(NodeType.TOP_LEVEL_ATTRIBUTE_SET, _root);
+        Node attributeNode = new(NodeType.TOP_LEVEL_ATTRIBUTE_SET, "", []);
 
         // must have at least 1 attribute
         attributeNode.Children.Add(
@@ -102,6 +102,7 @@ internal class Parser(Symbol[] symbols)
             );
         }
 
+        this._root.Children.Add(attributeNode);
         this.Expect(STATEMENT_END);
     }
 
@@ -116,7 +117,7 @@ internal class Parser(Symbol[] symbols)
 
     private void ObjectAttributeDeclaration(Node objectNode)
     {
-        Node attributeNode = GetSetIfExists(NodeType.OBJECT_ATTRIBUTE_SET, objectNode);
+        Node attributeNode = new(NodeType.OBJECT_ATTRIBUTE_SET, "", []);
 
         while (this.Has(IDENTIFIER))
         {
@@ -130,7 +131,7 @@ internal class Parser(Symbol[] symbols)
 
     private void ObjectBindDeclaration(Node objectNode)
     {
-        Node bindNode = GetSetIfExists(NodeType.OBJECT_BIND, objectNode);
+        Node bindNode = new(NodeType.OBJECT_BIND, "", []);
 
         bindNode.Children.Add(new Node(NodeType.OBJECT_BIND_TARGET,
             this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
@@ -147,7 +148,7 @@ internal class Parser(Symbol[] symbols)
 
     private void FieldTypeDeclaration(Node fieldNode)
     {
-        Node typeNode = GetSetIfExists(NodeType.FIELD_TYPE_SET, fieldNode);
+        Node typeNode = new(NodeType.FIELD_TYPE, "", []);
 
         typeNode.Children.Add(
             new Node(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value, []));
@@ -163,7 +164,7 @@ internal class Parser(Symbol[] symbols)
 
     private void FieldAllowsDeclaration(Node fieldNode)
     {
-        Node typeNode = GetSetIfExists(NodeType.FIELD_ALLOWS, fieldNode);
+        Node typeNode = new(NodeType.FIELD_ALLOWS, "", []);
 
         typeNode.Children.Add(new Node(NodeType.FIELD_ALLOWED_OBJECT,
             this.ExpectAndGet(IDENTIFIER).value, []));
@@ -179,7 +180,7 @@ internal class Parser(Symbol[] symbols)
 
     private void FieldBindDeclaration(Node fieldNode)
     {
-        Node bindNode = GetSetIfExists(NodeType.FIELD_BIND, fieldNode);
+        Node bindNode = new(NodeType.FIELD_BIND, "", []);
 
         this.Expect(DECL_FIELD_BIND);
 
@@ -197,7 +198,7 @@ internal class Parser(Symbol[] symbols)
 
     private void FieldAttribute(Node fieldNode)
     {
-        Node attributeNode = GetSetIfExists(NodeType.FIELD_ATTRIBUTE_SET, fieldNode);
+        Node attributeNode = new(NodeType.FIELD_ATTRIBUTE_SET, "", []);
 
         attributeNode.Children.Add(new Node(NodeType.FIELD_ATTRIBUTE,
             this.ExpectAndGet(IDENTIFIER).value, []));
@@ -207,17 +208,8 @@ internal class Parser(Symbol[] symbols)
             attributeNode.Children.Add(new Node(NodeType.FIELD_ATTRIBUTE, this.Consume().value,
                 []));
         }
-    }
 
-    private static Node GetSetIfExists(NodeType type, Node parent)
-    {
-        Node? node = parent.Children.FirstOrDefault(n => n.Type == type);
-        if (node == null)
-        {
-            node = new Node(type, "", []);
-            parent.Children.Add(node);
-        }
-        return node;
+        fieldNode.Children.Add(attributeNode);
     }
 
     private void ObjectFieldDeclaration(Node objectNode)
