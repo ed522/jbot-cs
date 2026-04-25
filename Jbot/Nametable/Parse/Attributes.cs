@@ -1,6 +1,6 @@
 using Jbot.Nametable.Parse;
 
-namespace Jbot.Nametable;
+namespace Jbot.Nametable.Parse;
 
 internal enum NametableAttribute
 {
