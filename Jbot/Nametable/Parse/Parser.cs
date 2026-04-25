@@ -135,6 +135,12 @@ internal class Parser(Symbol[] symbols)
         bindNode.Children.Add(new Node(NodeType.OBJECT_BIND_TARGET,
             this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
 
+        while (this.Has(DESCENDING_IDENTIFIER))
+        {
+            bindNode.Children.Add(new Node(NodeType.OBJECT_BIND_TARGET,
+                this.Consume().value, []));
+        }
+
         objectNode.Children.Add(bindNode);
         this.Expect(STATEMENT_END);
     }
