@@ -1,6 +1,3 @@
-
-using System.Runtime.CompilerServices;
-
 namespace Jbot.Nametable.Parse;
 
 internal static class Compiler
@@ -8,7 +5,7 @@ internal static class Compiler
 
     private static void InvalidState(Node node)
     {
-        throw new SyntaxException("did not expect token " + node.type + " here, bug in compiler?");
+        throw new SyntaxException("did not expect token " + node.Type + " here, bug in parser?");
     }
     private static void ThrowIfSet(object? value, string name)
     {
@@ -39,19 +36,16 @@ internal static class Compiler
         List<NametableAttribute> nametableAttributes = [];
         foreach (Node node in set.Children)
         {
-            if (node.type != NodeType.TOP_LEVEL_ATTRIBUTE)
+            if (node.Type != NodeType.TOP_LEVEL_ATTRIBUTE)
             {
                 InvalidState(node);
             }
-            NametableAttribute attrib = Attributes.ParseNametableAttribute(node.value);
+            NametableAttribute attrib = Attributes.ParseNametableAttribute(node.Value);
             if (nametableAttributes.Contains(attrib))
             {
                 throw new InvalidDocumentException("already defined attribute " + Attributes.GetName(attrib));
             }
-            else
-            {
-                nametableAttributes.Add(attrib);
-            }
+            nametableAttributes.Add(attrib);
         }
         return nametableAttributes;
     }
@@ -60,11 +54,11 @@ internal static class Compiler
         List<ObjectAttribute> attributes = [];
         foreach (Node node in set.Children)
         {
-            if (node.type != NodeType.OBJECT_ATTRIBUTE)
+            if (node.Type != NodeType.OBJECT_ATTRIBUTE)
             {
                 InvalidState(node);
             }
-            attributes.Add(Attributes.ParseObjectAttribute(node.value));
+            attributes.Add(Attributes.ParseObjectAttribute(node.Value));
         }
         return [..attributes];
     }
@@ -74,11 +68,11 @@ internal static class Compiler
         List<FieldAttribute> attributes = [];
         foreach (Node node in set.Children)
         {
-            if (node.type != NodeType.FIELD_ATTRIBUTE)
+            if (node.Type != NodeType.FIELD_ATTRIBUTE)
             {
                 InvalidState(node);
             }
-            attributes.Add(Attributes.ParseFieldAttribute(node.value));
+            attributes.Add(Attributes.ParseFieldAttribute(node.Value));
         }
         return [..attributes];
     }
@@ -88,34 +82,41 @@ internal static class Compiler
 
         foreach (Node node in field.Children)
         {
-            switch (node.type)
+            switch (node.Type)
             {
                 case NodeType.FIELD_ID:
                     ThrowIfSet(currentField.Id, nameof(currentField.Id));
-                    currentField.Id = ushort.Parse(node.value);
+                    currentField.Id = ushort.Parse(node.Value);
                     break;
 
                 case NodeType.FIELD_NAME:
                     ThrowIfSet(currentField.Name, nameof(currentField.Name));
-                    currentField.Name = node.value;
+                    currentField.Name = node.Value;
                     break;
 
                 case NodeType.FIELD_ALLOWED_OBJECT:
                     currentField.AllowedObjects ??= [];
-                    ThrowIfContains(currentField.AllowedObjects, node.value, nameof(currentField.AllowedObjects));
-                    currentField.AllowedObjects.Add(node.value);
+                    ThrowIfContains(currentField.AllowedObjects, node.Value, nameof(currentField.AllowedObjects));
+                    currentField.AllowedObjects.Add(node.Value);
                     break;
 
-                case NodeType.FIELD_TYPE:
+                case NodeType.FIELD_TYPE_SET:
                     currentField.AllowableTypes ??= [];
-                    ThrowIfContains(currentField.AllowableTypes, Enum.Parse<DataType>(node.value), nameof(currentField.AllowableTypes));
-                    currentField.AllowableTypes.Add(Enum.Parse<DataType>(node.value));
+
+                    foreach (Node child in node.Children)
+                    {
+                        ThrowIfContains(currentField.AllowableTypes,
+                            Enum.Parse<DataType>(child.Value), nameof(currentField.AllowableTypes));
+
+                        currentField.AllowableTypes.Add(Enum.Parse<DataType>(child.Value));
+                    }
+
                     break;
 
                 case NodeType.FIELD_BIND_TARGET:
                     currentField.BoundMembers ??= [];
-                    ThrowIfContains(currentField.BoundMembers, node.value, nameof(currentField.BoundMembers));
-                    currentField.BoundMembers.Add(node.value);
+                    ThrowIfContains(currentField.BoundMembers, node.Value, nameof(currentField.BoundMembers));
+                    currentField.BoundMembers.Add(node.Value);
                     break;
 
                 case NodeType.FIELD_ATTRIBUTE_SET:
@@ -144,6 +145,9 @@ internal static class Compiler
                     }
 
                     break;
+                default:
+                    InvalidState(node);
+                    break;
             }
         }
 
@@ -152,28 +156,28 @@ internal static class Compiler
 
     private static ObjectTemplateBuilder ParseObject(Node obj)
     {
-        // handle: attribs, name, id, binding, fields
         ObjectTemplateBuilder currentObject = new();
         ushort lowestFieldId = 0;
 
         foreach (Node node in obj.Children)
         {
-            switch (node.type)
+            switch (node.Type)
             {
+                // every simple (single) property can only be set once
                 case NodeType.OBJECT_ID:
                     ThrowIfSet(currentObject.Id, nameof(currentObject.Id));
-                    currentObject.Id = ushort.Parse(node.value);
+                    currentObject.Id = ushort.Parse(node.Value);
                     break;
 
                 case NodeType.OBJECT_NAME:
                     ThrowIfSet(currentObject.Name, nameof(currentObject.Name));
-                    currentObject.Name = node.value;
+                    currentObject.Name = node.Value;
                     break;
 
                 case NodeType.OBJECT_BIND_TARGET:
                     currentObject.BoundTypeNames ??= [];
-                    ThrowIfContains(currentObject.BoundTypeNames, node.value, nameof(currentObject.BoundTypeNames));
-                    currentObject.BoundTypeNames.Add(node.value);
+                    ThrowIfContains(currentObject.BoundTypeNames, node.Value, nameof(currentObject.BoundTypeNames));
+                    currentObject.BoundTypeNames.Add(node.Value);
                     break;
 
                 case NodeType.OBJECT_ATTRIBUTE_SET:
@@ -200,36 +204,40 @@ internal static class Compiler
 
                 case NodeType.FIELD:
                     currentObject.Fields ??= [];
-                    FieldTemplateBuilder field = ParseField(node);
+                    FieldTemplateBuilder fieldBuilder = ParseField(node);
                     // means: if the current object is unbound but the field is, complain
                     // also do so if the current object is bound but the field is missing its bind targets
 
-                    if ((currentObject.BoundTypeNames?.Count ?? 0) == 0 && (field.BoundMembers?.Count ?? 0) >= 0)
+                    if ((currentObject.BoundTypeNames?.Count ?? 0) == 0 && (fieldBuilder.BoundMembers?.Count ?? 0) >= 0)
                     {
-                        throw new InvalidDocumentException($"cannot bind field {field.Name} to a member if the object has no bind target");
+                        throw new InvalidDocumentException($"cannot bind field {fieldBuilder.Name} to a member if the object has no bind target");
                     }
-                    if ((currentObject.BoundTypeNames?.Count ?? 0) >= 0 && (field.BoundMembers?.Count ?? 0) == 0)
+                    if ((currentObject.BoundTypeNames?.Count ?? 0) >= 0 && (fieldBuilder.BoundMembers?.Count ?? 0) == 0)
                     {
-                        throw new InvalidDocumentException($"field {field.Name} has no bind target when object is bound");
+                        throw new InvalidDocumentException($"field {fieldBuilder.Name} has no bind target when object is bound");
                     }
                     // if field has no ID, auto assign. increment if auto-assigned or using the auto-assign ID since it's not in the list.
                     // go through the list and keep incrementing as long as there's one that already has the next ID.
-                    field.Id ??= lowestFieldId;
-                    if (field.Id == lowestFieldId) lowestFieldId++;
+                    fieldBuilder.Id ??= lowestFieldId;
+                    if (fieldBuilder.Id == lowestFieldId) lowestFieldId++;
                     while (currentObject.Fields.Any(f => lowestFieldId == f.Id))
                     {
-                        field.Id ??= lowestFieldId;
+                        fieldBuilder.Id ??= lowestFieldId;
                         lowestFieldId++;
                     }
 
-                    field.Check();
-                    FieldTemplate fieldTemplate = field.Build()!;
+                    fieldBuilder.Check();
+                    FieldTemplate field = fieldBuilder.Build()!;
                     // if there's already a field with this ID, throw
+
+                    // Access to modified closure: not applicable since lambda is immediately run
                     ThrowIfContains(
-                        currentObject.Fields, f => f.Id == fieldTemplate.Id, 
-                        nameof(fieldTemplate.Id), fieldTemplate.Id.ToString(), nameof(currentObject.Fields)
+                        // ReSharper disable AccessToModifiedClosure
+                        currentObject.Fields, f => field.Id == f.Id, 
+                        // ReSharper restore AccessToModifiedClosure
+                        nameof(field.Id), field.Id.ToString(), nameof(currentObject.Fields)
                     );
-                    currentObject.Fields.Add(fieldTemplate);
+                    currentObject.Fields.Add(field);
                     break;
 
                 default:
@@ -248,44 +256,51 @@ internal static class Compiler
         List<NametableAttribute> nametableAttributes = [];
         uint? version = null;
         ushort lowestId = 0;
-        foreach (Node node in root.Children) {
-            if (node.type == NodeType.VERSION)
+        foreach (Node node in root.Children)
+        {
+            switch (node.Type)
             {
-                version = uint.Parse(node.value);
-            }
-            else if (node.type == NodeType.TOP_LEVEL_ATTRIBUTE_SET)
-            {
-                nametableAttributes.AddRange(ParseDocumentAttributeSet(node));
-            }
-            else if (node.type == NodeType.OBJECT)
-            {
-                ObjectTemplateBuilder builder = ParseObject(node);
-                builder.Id ??= lowestId;
-                if (builder.Id == lowestId) lowestId++;
-                while (objects.Any(o => lowestId == o.Id))
-                {
-                    lowestId++;
-                }
+                case NodeType.VERSION:
+                    ThrowIfSet(version, nameof(version));
+                    version = uint.Parse(node.Value);
+                    break;
 
-                builder.Check();
-                ObjectTemplate fieldTemplate = builder.Build()!;
-                // if there's already a field with this ID, throw
-                ThrowIfContains(
-                    objects, f => f.Id == fieldTemplate.Id, 
-                    nameof(fieldTemplate.Id), fieldTemplate.Id.ToString(), nameof(objects)
-                );
-                objects.Add(fieldTemplate);
-            }
-            else
-            {
-                InvalidState(node);
+                case NodeType.TOP_LEVEL_ATTRIBUTE_SET:
+                    nametableAttributes.AddRange(ParseDocumentAttributeSet(node));
+                    break;
+
+                case NodeType.OBJECT:
+                    ObjectTemplateBuilder builder = ParseObject(node);
+                    builder.Id ??= lowestId;
+                    if (builder.Id == lowestId) lowestId++;
+                    while (objects.Any(o => lowestId == o.Id))
+                    {
+                        lowestId++;
+                    }
+
+                    builder.Check();
+                    ObjectTemplate obj = builder.Build()!;
+                    // if there's already a field with this ID, throw
+                    // inspection: same reason as above, lambda gets run immediately so there's no danger
+                    ThrowIfContains(
+                        // ReSharper disable once AccessToModifiedClosure
+                        objects, f => f.Id == obj.Id, 
+                        nameof(obj.Id), obj.Id.ToString(), nameof(objects)
+                    );
+                    objects.Add(obj);
+                    break;
+
+                default:
+                    InvalidState(node);
+                    break;
             }
         }
 
-        version ??= uint.MaxValue; // choose something, not that important
+        version ??= uint.MaxValue; // not 0 since that could conceivably be used for v0, this is a good canary
         return new Nametable([..objects], (uint) version,
             !nametableAttributes.Contains(NametableAttribute.NO_COMPRESSION),
             !nametableAttributes.Contains(NametableAttribute.NO_CRC));
+        
     }
 
 }
