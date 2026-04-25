@@ -4,9 +4,10 @@ namespace Jbot.Nametable.Parse;
 
 internal class Parser(Symbol[] symbols)
 {
-    private readonly Node _root = new(NodeType.ROOT, "", []);
     private uint _nextIndex;
-
+    private readonly HashSet<Node> _currentNodes = []; // mutable
+    private readonly HashSet<Node> _currentAttributeNodes = []; // mutable
+    
     #region Parser helpers - peek consume etc.
 
     private Symbol Peek()
@@ -79,164 +80,163 @@ internal class Parser(Symbol[] symbols)
 
     #region Parsing cases
 
-    private void DocumentAttributeDeclaration()
+    private HashSet<Node> DocumentAttributeDeclaration()
     {
         // looks like: `attrib attr1 [attr2...] ;`
-        Node attributeNode = new(NodeType.TOP_LEVEL_ATTRIBUTE_SET, "", []);
-
-        // must have at least 1 attribute
-        attributeNode.Children.Add(
-            new Node(
-                NodeType.TOP_LEVEL_ATTRIBUTE,
-                this.ExpectAndGet(IDENTIFIER).value,
-                []
-            )
-        );
+        // Node attributeNode = new(NodeType.TOP_LEVEL_ATTRIBUTE_SET, "", []);
+        HashSet<Node> currentChildren =
+        [
+            // must have at least 1 attribute
+            new(NodeType.TOP_LEVEL_ATTRIBUTE, this.ExpectAndGet(IDENTIFIER).value, []),
+        ];
 
         while (this.Has(IDENTIFIER))
         {
             Symbol identifier = this.Consume();
 
-            attributeNode.Children.Add(
+            currentChildren.Add(
                 new Node(NodeType.TOP_LEVEL_ATTRIBUTE, identifier.value, [])
             );
         }
-
-        this._root.Children.Add(attributeNode);
         this.Expect(STATEMENT_END);
+
+        return currentChildren;
     }
 
-    private void VersionDeclaration()
+    private Node VersionDeclaration()
     {
         Symbol versionNumber = this.ExpectAndGet(NUMBER);
         this.Expect(STATEMENT_END);
 
-        Node node = new(NodeType.VERSION, versionNumber.value, []);
-        this._root.Children.Add(node);
+        return new Node(NodeType.VERSION, versionNumber.value, []);
     }
 
-    private void ObjectAttributeDeclaration(Node objectNode)
+    private HashSet<Node> ObjectAttributeDeclaration()
     {
-        Node attributeNode = new(NodeType.OBJECT_ATTRIBUTE_SET, "", []);
+        HashSet<Node> attributes = [];
 
         while (this.Has(IDENTIFIER))
         {
-            attributeNode.Children.Add(
-                new Node(NodeType.OBJECT_ATTRIBUTE, this.Consume().value, []));
+            attributes.Add(new Node(NodeType.OBJECT_ATTRIBUTE, this.Consume().value, []));
         }
 
-        objectNode.Children.Add(attributeNode);
         this.Expect(STATEMENT_END);
+        return attributes;
     }
 
-    private void ObjectBindDeclaration(Node objectNode)
+    private HashSet<Node> ObjectBindDeclaration()
     {
-        Node bindNode = new(NodeType.OBJECT_BIND, "", []);
-
-        bindNode.Children.Add(new Node(NodeType.OBJECT_BIND_TARGET,
-            this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
+        HashSet<Node> currentChildren = 
+        [
+            new(NodeType.OBJECT_BIND_TARGET, this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []),
+        ];
 
         while (this.Has(DESCENDING_IDENTIFIER))
         {
-            bindNode.Children.Add(new Node(NodeType.OBJECT_BIND_TARGET,
+            currentChildren.Add(new Node(NodeType.OBJECT_BIND_TARGET,
                 this.Consume().value, []));
         }
-
-        objectNode.Children.Add(bindNode);
         this.Expect(STATEMENT_END);
+        
+        return currentChildren;
     }
 
-    private void FieldTypeDeclaration(Node fieldNode)
+    private HashSet<Node> FieldTypeDeclaration()
     {
-        Node typeNode = new(NodeType.FIELD_TYPE, "", []);
-
-        typeNode.Children.Add(
-            new Node(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value, []));
+        HashSet<Node> currentChildren = 
+        [
+            new(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value, []),
+        ];
 
         while (this.Accept(TYPE_SEPARATOR))
         {
-            typeNode.Children.Add(new Node(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value,
+            currentChildren.Add(new Node(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value,
                 []));
         }
 
-        fieldNode.Children.Add(typeNode);
+        return currentChildren;
     }
 
-    private void FieldAllowsDeclaration(Node fieldNode)
+    private HashSet<Node> FieldAllowsDeclaration()
     {
-        Node typeNode = new(NodeType.FIELD_ALLOWS, "", []);
-
-        typeNode.Children.Add(new Node(NodeType.FIELD_ALLOWED_OBJECT,
-            this.ExpectAndGet(IDENTIFIER).value, []));
+        HashSet<Node> currentChildren =
+        [
+            new(NodeType.FIELD_ALLOWED_OBJECT, this.ExpectAndGet(IDENTIFIER).value, []),
+        ];
 
         while (this.Accept(TYPE_SEPARATOR))
         {
-            typeNode.Children.Add(new Node(NodeType.FIELD_ALLOWED_OBJECT,
+            currentChildren.Add(new Node(NodeType.FIELD_ALLOWED_OBJECT,
                 this.ExpectAndGet(IDENTIFIER).value, []));
         }
 
-        fieldNode.Children.Add(typeNode);
+        return currentChildren;
     }
 
-    private void FieldBindDeclaration(Node fieldNode)
+    private HashSet<Node> FieldBindDeclaration()
     {
-        Node bindNode = new(NodeType.FIELD_BIND, "", []);
+        HashSet<Node> currentChildren = [];
 
         this.Expect(DECL_FIELD_BIND);
 
-        bindNode.Children.Add(new Node(NodeType.FIELD_BIND_TARGET,
+        currentChildren.Add(new Node(NodeType.FIELD_BIND_TARGET,
             this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
 
         while (this.Accept(DECL_FIELD_BIND))
         {
-            bindNode.Children.Add(new Node(NodeType.FIELD_BIND_TARGET,
+            currentChildren.Add(new Node(NodeType.FIELD_BIND_TARGET,
                 this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
         }
 
-        fieldNode.Children.Add(bindNode);
+        return currentChildren;
     }
 
-    private void FieldAttribute(Node fieldNode)
+    private HashSet<Node> FieldAttributeDeclaration()
     {
-        Node attributeNode = new(NodeType.FIELD_ATTRIBUTE_SET, "", []);
-
-        attributeNode.Children.Add(new Node(NodeType.FIELD_ATTRIBUTE,
-            this.ExpectAndGet(IDENTIFIER).value, []));
+        HashSet<Node> currentChildren =
+        [
+            new(NodeType.FIELD_ATTRIBUTE, this.ExpectAndGet(IDENTIFIER).value, []),
+        ];
 
         while (this.Has(IDENTIFIER))
         {
-            attributeNode.Children.Add(new Node(NodeType.FIELD_ATTRIBUTE, this.Consume().value,
+            currentChildren.Add(new Node(NodeType.FIELD_ATTRIBUTE, this.Consume().value,
                 []));
         }
 
-        fieldNode.Children.Add(attributeNode);
+        return currentChildren;
     }
 
-    private void ObjectFieldDeclaration(Node objectNode)
+    private Node ObjectFieldDeclaration()
     {
-        Node fieldNode = new(NodeType.FIELD, "", []);
+        HashSet<Node> currentChildren =
+        [
+            new(NodeType.FIELD_ID, this.ExpectAndGet(IDENTIFIER).value, []),
+        ];
 
-        fieldNode.Children.Add(new Node(NodeType.FIELD_ID, this.ExpectAndGet(IDENTIFIER).value,
-            []));
+        HashSet<Node> currentAttributes = [];
+        HashSet<Node> currentAllows = [];
+        HashSet<Node> currentBinds = [];
+        HashSet<Node> currentTypes = [];
         // check for any of the possibilities
 
         while (!this.Has(STATEMENT_END) && !this.Has(BLOCK_START))
         {
             if (this.Accept(DECL_TYPE))
             {
-                this.FieldTypeDeclaration(fieldNode);
+                currentTypes.UnionWith(this.FieldTypeDeclaration());
             }
             else if (this.Accept(DECL_ALLOWS))
             {
-                this.FieldAllowsDeclaration(fieldNode);
+                currentAllows.UnionWith(this.FieldAllowsDeclaration());
             }
             else if (this.Has(DECL_FIELD_BIND))
             {
-                this.FieldBindDeclaration(fieldNode);
+                currentBinds.UnionWith(this.FieldBindDeclaration());
             }
             else if (this.Has(IDENTIFIER))
             {
-                this.FieldAttribute(fieldNode);
+                currentAttributes.UnionWith(this.FieldAttributeDeclaration());
             }
             else
             {
@@ -248,8 +248,16 @@ internal class Parser(Symbol[] symbols)
 
         if (next.type == STATEMENT_END)
         {
-            objectNode.Children.Add(fieldNode);
-            return;
+            // set everything here before returning
+            if (currentTypes.Count > 0)
+                currentChildren.Add(new Node(NodeType.FIELD_TYPE_SET, currentTypes));
+            if (currentAllows.Count > 0)
+                currentChildren.Add(new Node(NodeType.FIELD_ALLOWS, currentAllows));
+            if (currentBinds.Count > 0)
+                currentChildren.Add(new Node(NodeType.FIELD_BIND, currentBinds));
+            if (currentAttributes.Count > 0)
+                currentChildren.Add(new Node(NodeType.FIELD_ATTRIBUTE_SET, currentAttributes));
+            return new Node(NodeType.FIELD, currentChildren);
         }
 
         // long-form body
@@ -257,22 +265,22 @@ internal class Parser(Symbol[] symbols)
         {
             if (this.Accept(DECL_TYPE))
             {
-                this.FieldTypeDeclaration(fieldNode);
+                currentTypes.UnionWith(this.FieldTypeDeclaration());
                 this.Expect(STATEMENT_END);
             }
             else if (this.Accept(DECL_ALLOWS))
             {
-                this.FieldAllowsDeclaration(fieldNode);
+                currentAllows.UnionWith(this.FieldAllowsDeclaration());
                 this.Expect(STATEMENT_END);
             }
             else if (this.Accept(DECL_BIND))
             {
-                this.FieldBindDeclaration(fieldNode);
+                currentBinds.UnionWith(this.FieldBindDeclaration());
                 this.Expect(STATEMENT_END);
             }
             else if (this.Accept(DECL_ATTRIB))
             {
-                this.FieldAttribute(fieldNode);
+                currentAttributes.UnionWith(this.FieldAttributeDeclaration());
                 this.Expect(STATEMENT_END);
             }
             else
@@ -280,22 +288,34 @@ internal class Parser(Symbol[] symbols)
                 ThrowUnexpectedSymbol(this.Peek());
             }
         }
-
-        objectNode.Children.Add(fieldNode);
         this.Expect(BLOCK_END);
+
+        // deduplicate, and don't bother adding an extra node if there are none
+        if (currentTypes.Count > 0)
+            currentChildren.Add(new Node(NodeType.FIELD_TYPE_SET, currentTypes));
+        if (currentAllows.Count > 0)
+            currentChildren.Add(new Node(NodeType.FIELD_ALLOWS, currentAllows));
+        if (currentBinds.Count > 0)
+            currentChildren.Add(new Node(NodeType.FIELD_BIND, currentBinds));
+        if (currentAttributes.Count > 0)
+            currentChildren.Add(new Node(NodeType.FIELD_ATTRIBUTE_SET, currentAttributes));
+
+        return new Node(NodeType.FIELD, currentChildren);
     }
 
-    private void ObjectDeclaration()
+    private Node ObjectDeclaration()
     {
-        Node objectNode = new(NodeType.OBJECT, "", []);
+        HashSet<Node> currentNodes = [];
+        HashSet<Node> currentAttributes = [];
+        HashSet<Node> currentBinds = [];
 
         Symbol name = this.ExpectAndGet(IDENTIFIER);
-        objectNode.Children.Add(new Node(NodeType.OBJECT_NAME, name.value, []));
+        currentNodes.Add(new Node(NodeType.OBJECT_NAME, name.value, []));
 
         if (this.Accept(DECL_ID))
         {
-            objectNode.Children.Add(new Node(NodeType.OBJECT_ID, this.ExpectAndGet(NUMBER).value,
-                []));
+            currentNodes.Add(new Node(NodeType.OBJECT_ID,
+                this.ExpectAndGet(NUMBER).value, []));
         }
 
         this.Expect(BLOCK_START);
@@ -304,20 +324,24 @@ internal class Parser(Symbol[] symbols)
         {
             if (this.Accept(DECL_ATTRIB))
             {
-                this.ObjectAttributeDeclaration(objectNode);
+                currentAttributes.UnionWith(this.ObjectAttributeDeclaration());
             }
             else if (this.Accept(DECL_BIND))
             {
-                this.ObjectBindDeclaration(objectNode);
+                currentBinds.UnionWith(this.ObjectBindDeclaration());
             }
             else if (this.Accept(DECL_FIELD))
             {
-                this.ObjectFieldDeclaration(objectNode);
+                currentNodes.Add(this.ObjectFieldDeclaration()); // self-contained
             }
             else if (this.Accept(BLOCK_END))
             {
-                this._root.Children.Add(objectNode);
-                return;
+                if (currentAttributes.Count > 0)
+                    currentNodes.Add(new Node(NodeType.OBJECT_ATTRIBUTE_SET, currentAttributes));
+                if (currentBinds.Count > 0)
+                    currentNodes.Add(new Node(NodeType.OBJECT_BIND, currentBinds));
+                
+                return new Node(NodeType.OBJECT, currentNodes);
             }
             else
             {
@@ -330,15 +354,15 @@ internal class Parser(Symbol[] symbols)
     {
         if (this.Accept(DECL_ATTRIB))
         {
-            this.DocumentAttributeDeclaration();
+            this._currentAttributeNodes.UnionWith(this.DocumentAttributeDeclaration());
         }
         else if (this.Accept(DECL_VERSION))
         {
-            this.VersionDeclaration();
+            this._currentNodes.Add(this.VersionDeclaration());
         }
         else if (this.Accept(DECL_OBJECT))
         {
-            this.ObjectDeclaration();
+            this._currentNodes.Add(this.ObjectDeclaration());
         }
         else
         {
@@ -351,7 +375,9 @@ internal class Parser(Symbol[] symbols)
     public Node Parse()
     {
         while (this._nextIndex < symbols.Length) this.Statement();
-        return this._root;
+        if (this._currentAttributeNodes.Count > 0)
+            this._currentNodes.Add(new Node(NodeType.TOP_LEVEL_ATTRIBUTE_SET, this._currentAttributeNodes));
+        return new Node(NodeType.ROOT, this._currentNodes);
     }
 
     public static Node Parse(Symbol[] symbols) { return new Parser(symbols).Parse(); }
