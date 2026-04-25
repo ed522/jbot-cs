@@ -36,9 +36,9 @@ internal static class Compiler
     }
 
 
-    private static List<NametableAttribute> ParseDocumentAttributeSet(Node set)
+    private static NametableAttribute[] ParseDocumentAttributeSet(Node set)
     {
-        List<NametableAttribute> nametableAttributes = [];
+        List<NametableAttribute> attributes = [];
 
         foreach (Node node in set.Children)
         {
@@ -49,16 +49,16 @@ internal static class Compiler
 
             NametableAttribute attrib = Attributes.ParseNametableAttribute(node.Value);
 
-            if (nametableAttributes.Contains(attrib))
+            if (attributes.Contains(attrib))
             {
                 throw new InvalidDocumentException("already defined attribute " +
                                                    Attributes.GetName(attrib));
             }
 
-            nametableAttributes.Add(attrib);
+            attributes.Add(attrib);
         }
 
-        return nametableAttributes;
+        return [..attributes];
     }
 
     private static ObjectAttribute[] ParseObjectAttributeSet(Node set)
@@ -321,8 +321,9 @@ internal static class Compiler
     public static Nametable Compile(Node root)
     {
         List<ObjectTemplate> objects = [];
-        List<NametableAttribute> nametableAttributes = [];
         uint? version = null;
+        bool? useChecksum = null;
+        bool? useCompression = null;
         ushort lowestId = 0;
 
         foreach (Node node in root.Children)
@@ -335,7 +336,29 @@ internal static class Compiler
                     break;
 
                 case NodeType.TOP_LEVEL_ATTRIBUTE_SET:
-                    nametableAttributes.AddRange(ParseDocumentAttributeSet(node));
+                    NametableAttribute[] attribs = ParseDocumentAttributeSet(node);
+
+                    foreach (NametableAttribute attrib in attribs)
+                    {
+                        switch (attrib)
+                        {
+                            case NametableAttribute.NO_CHECKSUM:
+                                ThrowIfSet(useChecksum, nameof(useChecksum));
+                                useChecksum = false;
+                                break;
+
+                            case NametableAttribute.CHECKSUM:
+                                ThrowIfSet(useChecksum, nameof(useChecksum));
+                                useChecksum = true;
+                                break;
+
+                            case NametableAttribute.NO_COMPRESSION:
+                                ThrowIfSet(useCompression, nameof(useCompression));
+                                useCompression = false;
+                                break;
+                        }
+                    }
+
                     break;
 
                 case NodeType.OBJECT:
@@ -371,8 +394,7 @@ internal static class Compiler
         version ??= uint
             .MaxValue; // not 0 since that could conceivably be used for v0, this is a good canary
 
-        return new Nametable([..objects], (uint)version,
-            !nametableAttributes.Contains(NametableAttribute.NO_COMPRESSION),
-            !nametableAttributes.Contains(NametableAttribute.NO_CRC));
+        return new Nametable([..objects], (uint)version, useCompression ?? true,
+            useChecksum ?? false);
     }
 }
