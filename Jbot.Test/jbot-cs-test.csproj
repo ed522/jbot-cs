@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>jbot_cs_test</RootNamespace>
+    <RootNamespace>Jbot.Test</RootNamespace>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -19,6 +19,20 @@
 
   <ItemGroup>
     <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestData\**\*" >
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jbot\jbot-cs.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TestData\Lexer\" />
   </ItemGroup>
 
 </Project>
