@@ -187,6 +187,8 @@ internal static class Compiler
                     break;
 
                 case NodeType.FIELD_BIND_TARGET:
+                    // bound members are plural because different platforms have different 
+                    // naming conventions
                     currentField.BoundMembers ??= [];
 
                     ThrowIfContains(currentField.BoundMembers, node.Value,
@@ -198,12 +200,13 @@ internal static class Compiler
                 case NodeType.FIELD_ATTRIBUTE_SET:
                     FieldAttribute[] attributes = ParseFieldAttributeSet(node);
 
-                    // add attributes
+                    // set attributes
                     foreach (FieldAttribute attrib in attributes)
                     {
                         switch (attrib)
                         {
                             case FieldAttribute.NO_COMPRESSION:
+                                // each prop is null upon creation
                                 ThrowIfSet(currentField.UseCompression,
                                     nameof(currentField.UseCompression));
 
@@ -211,6 +214,7 @@ internal static class Compiler
                                 break;
 
                             case FieldAttribute.NULLABLE:
+                                // essentially a special type case
                                 if (currentField.AllowableTypes?.Contains(DataType.NULL) ?? false)
                                 {
                                     throw new InvalidDocumentException(
