@@ -1,177 +1,245 @@
 using static Jbot.Nametable.Parse.SymbolType;
 
 namespace Jbot.Nametable.Parse;
+
 internal class Parser(Symbol[] symbols)
 {
-    private readonly Node root = new(NodeType.ROOT, "", []);
-    private readonly Symbol[] symbols = symbols;
-    private uint nextIndex = 0;
+    private readonly Node _root = new(NodeType.ROOT, "", []);
+    private uint _nextIndex;
+
+    #region Parser helpers - peek consume etc.
 
     private Symbol Peek()
     {
-        return symbols[nextIndex];
-    }
-    private Symbol Consume()
-    {
-        return symbols[nextIndex++];
+        if (this._nextIndex >= symbols.Length)
+        {
+            throw new SyntaxException("unexpected end of file");
+        }
+
+        return symbols[this._nextIndex];
     }
 
-    private bool Has(SymbolType type)
+    private Symbol Consume()
     {
-        return Peek().type == type;
+        if (this._nextIndex >= symbols.Length)
+        {
+            throw new SyntaxException("unexpected end of file");
+        }
+
+        return symbols[this._nextIndex++];
     }
+
+    private bool Has(SymbolType type) { return this.Peek().type == type; }
+
     private bool Accept(SymbolType type)
     {
-        if (Has(type))
+        if (this.Has(type))
         {
-            Consume();
+            this.Consume();
             return true;
         }
 
         return false;
     }
+
     private void Expect(SymbolType type)
     {
-        if (!Accept(type))
+        if (!this.Accept(type))
         {
             throw new SyntaxException("expected " + type);
         }
     }
+
     private Symbol ExpectAndGet(params SymbolType[] types)
     {
-        foreach (SymbolType type in types)
+        if (!types.Any(this.Has))
         {
-            if (Has(type)) return Consume();
+            throw new SyntaxException("expected one of " + types);
         }
-        throw new SyntaxException("expected one of " + types.ToString());
+
+        return this.Consume();
     }
+
     private Symbol ExpectAndGet(SymbolType type)
     {
-        if (!Has(type))
+        if (!this.Has(type))
         {
             throw new SyntaxException("expected " + type);
         }
 
-        return Consume();
+        return this.Consume();
     }
 
     private static void ThrowUnexpectedSymbol(Symbol symbol)
     {
-        throw new SyntaxException("unexpected symbol " + symbol.ToString());
+        throw new SyntaxException("unexpected symbol " + symbol);
     }
+
+    #endregion
+
+    #region Parsing cases
 
     private void DocumentAttributeDeclaration()
     {
+        // looks like: `attrib attr1 [attr2...] ;`
         Node attributeNode = new(NodeType.TOP_LEVEL_ATTRIBUTE_SET, "", []);
-        while (Has(IDENTIFIER))
+
+        // must have at least 1 attribute
+        attributeNode.Children.Add(
+            new Node(
+                NodeType.TOP_LEVEL_ATTRIBUTE,
+                this.ExpectAndGet(IDENTIFIER).value,
+                []
+            )
+        );
+
+        while (this.Has(IDENTIFIER))
         {
-            Symbol identifier = Consume();
-            attributeNode.Children.Add(new Node(NodeType.TOP_LEVEL_ATTRIBUTE, identifier.value, []));
+            Symbol identifier = this.Consume();
+
+            attributeNode.Children.Add(
+                new Node(NodeType.TOP_LEVEL_ATTRIBUTE, identifier.value, [])
+            );
         }
-        root.Children.Add(attributeNode);
-        Expect(STATEMENT_END);
+
+        this._root.Children.Add(attributeNode);
+        this.Expect(STATEMENT_END);
     }
+
     private void VersionDeclaration()
     {
-        Symbol versionNumber = ExpectAndGet(NUMBER);
-        Expect(STATEMENT_END);
+        Symbol versionNumber = this.ExpectAndGet(NUMBER);
+        this.Expect(STATEMENT_END);
 
         Node node = new(NodeType.VERSION, versionNumber.value, []);
-        root.Children.Add(node);
+        this._root.Children.Add(node);
     }
 
     private void ObjectAttributeDeclaration(Node objectNode)
     {
         Node attributeNode = new(NodeType.OBJECT_ATTRIBUTE_SET, "", []);
-        while (Has(IDENTIFIER))
+
+        while (this.Has(IDENTIFIER))
         {
-            attributeNode.Children.Add(new Node(NodeType.OBJECT_ATTRIBUTE, Consume().value, []));
+            attributeNode.Children.Add(
+                new Node(NodeType.OBJECT_ATTRIBUTE, this.Consume().value, []));
         }
+
         objectNode.Children.Add(attributeNode);
-        Expect(STATEMENT_END);
+        this.Expect(STATEMENT_END);
     }
+
     private void ObjectBindDeclaration(Node objectNode)
     {
         Node bindNode = new(NodeType.OBJECT_BIND, "", []);
-        bindNode.Children.Add(new Node(NodeType.OBJECT_BIND_TARGET, ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
+
+        bindNode.Children.Add(new Node(NodeType.OBJECT_BIND_TARGET,
+            this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
+
         objectNode.Children.Add(bindNode);
-        Expect(STATEMENT_END);
+        this.Expect(STATEMENT_END);
     }
 
     private void FieldTypeDeclaration(Node fieldNode)
     {
         Node typeNode = new(NodeType.FIELD_TYPE, "", []);
-        typeNode.Children.Add(new Node(NodeType.FIELD_TYPE, ExpectAndGet(IDENTIFIER).value, []));
-        while (Accept(TYPE_SEPARATOR))
+
+        typeNode.Children.Add(
+            new Node(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value, []));
+
+        while (this.Accept(TYPE_SEPARATOR))
         {
-            typeNode.Children.Add(new Node(NodeType.FIELD_TYPE, ExpectAndGet(IDENTIFIER).value, []));
+            typeNode.Children.Add(new Node(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value,
+                []));
         }
+
         fieldNode.Children.Add(typeNode);
     }
+
     private void FieldAllowsDeclaration(Node fieldNode)
     {
         Node typeNode = new(NodeType.FIELD_ALLOWS, "", []);
-        typeNode.Children.Add(new Node(NodeType.FIELD_ALLOWED_OBJECT, ExpectAndGet(IDENTIFIER).value, []));
-        while (Accept(TYPE_SEPARATOR))
+
+        typeNode.Children.Add(new Node(NodeType.FIELD_ALLOWED_OBJECT,
+            this.ExpectAndGet(IDENTIFIER).value, []));
+
+        while (this.Accept(TYPE_SEPARATOR))
         {
-            typeNode.Children.Add(new Node(NodeType.FIELD_ALLOWED_OBJECT, ExpectAndGet(IDENTIFIER).value, []));
+            typeNode.Children.Add(new Node(NodeType.FIELD_ALLOWED_OBJECT,
+                this.ExpectAndGet(IDENTIFIER).value, []));
         }
+
         fieldNode.Children.Add(typeNode);
     }
+
     private void FieldBindDeclaration(Node fieldNode)
     {
         Node bindNode = new(NodeType.FIELD_BIND, "", []);
-        
-        Expect(DECL_FIELD_BIND);
-        bindNode.Children.Add(new Node(NodeType.FIELD_BIND_TARGET, ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
-        while (Accept(DECL_FIELD_BIND))
+
+        this.Expect(DECL_FIELD_BIND);
+
+        bindNode.Children.Add(new Node(NodeType.FIELD_BIND_TARGET,
+            this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
+
+        while (this.Accept(DECL_FIELD_BIND))
         {
-            bindNode.Children.Add(new Node(NodeType.FIELD_BIND_TARGET, ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
+            bindNode.Children.Add(new Node(NodeType.FIELD_BIND_TARGET,
+                this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
         }
 
         fieldNode.Children.Add(bindNode);
     }
+
     private void FieldAttribute(Node fieldNode)
     {
         Node attributeNode = new(NodeType.FIELD_ATTRIBUTE_SET, "", []);
-        attributeNode.Children.Add(new Node(NodeType.FIELD_ATTRIBUTE, ExpectAndGet(IDENTIFIER).value, []));
-        while (Has(IDENTIFIER))
+
+        attributeNode.Children.Add(new Node(NodeType.FIELD_ATTRIBUTE,
+            this.ExpectAndGet(IDENTIFIER).value, []));
+
+        while (this.Has(IDENTIFIER))
         {
-            attributeNode.Children.Add(new Node(NodeType.FIELD_ATTRIBUTE, Consume().value, []));
+            attributeNode.Children.Add(new Node(NodeType.FIELD_ATTRIBUTE, this.Consume().value,
+                []));
         }
+
         fieldNode.Children.Add(attributeNode);
     }
 
     private void ObjectFieldDeclaration(Node objectNode)
     {
         Node fieldNode = new(NodeType.FIELD, "", []);
-        fieldNode.Children.Add(new Node(NodeType.FIELD_ID, ExpectAndGet(IDENTIFIER).value, []));
+
+        fieldNode.Children.Add(new Node(NodeType.FIELD_ID, this.ExpectAndGet(IDENTIFIER).value,
+            []));
         // check for any of the possibilities
 
-        while (!Has(STATEMENT_END) && !Has(BLOCK_START))
+        while (!this.Has(STATEMENT_END) && !this.Has(BLOCK_START))
         {
-            if (Accept(DECL_TYPE))
+            if (this.Accept(DECL_TYPE))
             {
-                FieldTypeDeclaration(fieldNode);
+                this.FieldTypeDeclaration(fieldNode);
             }
-            else if (Accept(DECL_ALLOWS))
+            else if (this.Accept(DECL_ALLOWS))
             {
-                FieldAllowsDeclaration(fieldNode);
+                this.FieldAllowsDeclaration(fieldNode);
             }
-            else if (Has(DECL_FIELD_BIND))
+            else if (this.Has(DECL_FIELD_BIND))
             {
-                FieldBindDeclaration(fieldNode);
+                this.FieldBindDeclaration(fieldNode);
             }
-            else if (Has(IDENTIFIER))
+            else if (this.Has(IDENTIFIER))
             {
-                FieldAttribute(fieldNode);
+                this.FieldAttribute(fieldNode);
             }
             else
             {
-                throw new SyntaxException("unexpected symbol " + Peek().ToString());
+                ThrowUnexpectedSymbol(this.Peek());
             }
         }
-        Symbol next = ExpectAndGet(STATEMENT_END, BLOCK_START);
+
+        Symbol next = this.ExpectAndGet(STATEMENT_END, BLOCK_START);
+
         if (next.type == STATEMENT_END)
         {
             objectNode.Children.Add(fieldNode);
@@ -179,100 +247,106 @@ internal class Parser(Symbol[] symbols)
         }
 
         // long-form body
-        while (!Has(BLOCK_END))
+        while (!this.Has(BLOCK_END))
         {
-            if (Accept(DECL_TYPE))
+            if (this.Accept(DECL_TYPE))
             {
-                FieldTypeDeclaration(fieldNode);
-                Expect(STATEMENT_END);
+                this.FieldTypeDeclaration(fieldNode);
+                this.Expect(STATEMENT_END);
             }
-            else if (Accept(DECL_ALLOWS))
+            else if (this.Accept(DECL_ALLOWS))
             {
-                FieldAllowsDeclaration(fieldNode);
-                Expect(STATEMENT_END);
+                this.FieldAllowsDeclaration(fieldNode);
+                this.Expect(STATEMENT_END);
             }
-            else if (Accept(DECL_BIND))
+            else if (this.Accept(DECL_BIND))
             {
-                FieldBindDeclaration(fieldNode);
-                Expect(STATEMENT_END);
+                this.FieldBindDeclaration(fieldNode);
+                this.Expect(STATEMENT_END);
             }
-            else if (Accept(DECL_ATTRIB))
+            else if (this.Accept(DECL_ATTRIB))
             {
-                FieldAttribute(fieldNode);
-                Expect(STATEMENT_END);
+                this.FieldAttribute(fieldNode);
+                this.Expect(STATEMENT_END);
             }
             else
             {
-                ThrowUnexpectedSymbol(Peek());
+                ThrowUnexpectedSymbol(this.Peek());
             }
         }
-        objectNode.Children.Add(fieldNode);
-        Expect(BLOCK_END);
 
+        objectNode.Children.Add(fieldNode);
+        this.Expect(BLOCK_END);
     }
 
     private void ObjectDeclaration()
     {
         Node objectNode = new(NodeType.OBJECT, "", []);
 
-        Symbol name = ExpectAndGet(IDENTIFIER);
+        Symbol name = this.ExpectAndGet(IDENTIFIER);
         objectNode.Children.Add(new Node(NodeType.OBJECT_NAME, name.value, []));
 
-        if (Accept(DECL_ID))
+        if (this.Accept(DECL_ID))
         {
-            objectNode.Children.Add(new Node(NodeType.OBJECT_ID, ExpectAndGet(NUMBER).value, []));
+            objectNode.Children.Add(new Node(NodeType.OBJECT_ID, this.ExpectAndGet(NUMBER).value,
+                []));
         }
 
-        Expect(BLOCK_START);
-        
-        while (true) {
-            if (Accept(DECL_ATTRIB))
+        this.Expect(BLOCK_START);
+
+        while (true)
+        {
+            if (this.Accept(DECL_ATTRIB))
             {
-                ObjectAttributeDeclaration(objectNode);
+                this.ObjectAttributeDeclaration(objectNode);
             }
-            else if (Accept(DECL_BIND))
+            else if (this.Accept(DECL_BIND))
             {
-                ObjectBindDeclaration(objectNode);
+                this.ObjectBindDeclaration(objectNode);
             }
-            else if (Accept(DECL_FIELD))
+            else if (this.Accept(DECL_FIELD))
             {
-                ObjectFieldDeclaration(objectNode);
+                this.ObjectFieldDeclaration(objectNode);
             }
-            else if (Accept(BLOCK_END))
+            else if (this.Accept(BLOCK_END))
             {
-                root.Children.Add(objectNode);
+                this._root.Children.Add(objectNode);
                 return;
             }
             else
             {
-                ThrowUnexpectedSymbol(Peek());
+                ThrowUnexpectedSymbol(this.Peek());
             }
         }
     }
 
     private void Statement()
     {
-        if (Accept(DECL_ATTRIB))
+        if (this.Accept(DECL_ATTRIB))
         {
-            DocumentAttributeDeclaration();
+            this.DocumentAttributeDeclaration();
         }
-        else if (Accept(DECL_VERSION))
+        else if (this.Accept(DECL_VERSION))
         {
-            VersionDeclaration();
+            this.VersionDeclaration();
         }
-        else if (Accept(DECL_OBJECT))
+        else if (this.Accept(DECL_OBJECT))
         {
-            ObjectDeclaration();
+            this.ObjectDeclaration();
         }
         else
         {
-            ThrowUnexpectedSymbol(Peek());
+            ThrowUnexpectedSymbol(this.Peek());
         }
     }
+
+    #endregion
+
     public Node Parse()
     {
-        while (this.nextIndex < this.symbols.Length) Statement();
-        return this.root;
+        while (this._nextIndex < symbols.Length) this.Statement();
+        return this._root;
     }
 
+    public static Node Parse(Symbol[] symbols) { return new Parser(symbols).Parse(); }
 }
