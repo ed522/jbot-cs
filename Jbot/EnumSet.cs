@@ -6,135 +6,28 @@ namespace Jbot;
 
 public class EnumSet<T> : ISet<T> where T : struct, Enum
 {
-    private class EnumSetEnumerator : IEnumerator<T>
-    {
-        public T Current => (index >= 0 && index < reference.possibleValues.Length)
-            ? reference.possibleValues[index]
-            : default;
-
-        private readonly EnumSet<T> reference;
-        object IEnumerator.Current => Current;
-        private int index = -1;
-
-        public EnumSetEnumerator(EnumSet<T> reference) { this.reference = reference; }
-
-        public void Dispose()
-        {
-            // nothing to do
-        }
-
-        public bool MoveNext()
-        {
-            while (++index < reference.possibleValues.Length)
-            {
-                if (reference.Contains(reference.possibleValues[index]))
-                    return true;
-            }
-
-            return false;
-        }
-
-        public void Reset() { index = -1; }
-    }
-
-    private ulong entries;
-    private ulong[] largeEntries;
-    private T[] possibleValues;
+    private readonly ulong[] largeEntries;
 
     private readonly EnumSet<T>? parent;
-    public bool IsReadOnly { get; private set; }
+    private readonly T[] possibleValues;
 
-    public int Count
-    {
-        get
-        {
-            if (!IsReadOnly)
-            {
-                if (largeEntries.Length == 0)
-                {
-                    return BitOperations.PopCount(entries);
-                }
-                else
-                {
-                    int val = 0;
-
-                    foreach (ulong i in largeEntries)
-                    {
-                        val += BitOperations.PopCount(i);
-                    }
-
-                    return val;
-                }
-            }
-            else
-            {
-                return parent!.Count;
-            }
-        }
-    }
-
-    private void SetEntry(T value)
-    {
-        int index = Array.IndexOf(possibleValues, value);
-        if (index == -1) return;
-
-        if (largeEntries.Length != 0)
-        {
-            int arrayIndex = index / 64;
-            int bitIndex = index % 64;
-            largeEntries[arrayIndex] |= (1UL << bitIndex);
-        }
-        else
-        {
-            entries |= (1UL << index);
-        }
-    }
-
-    private bool GetEntry(T value)
-    {
-        int index = Array.IndexOf(possibleValues, value);
-        if (index == -1) return false;
-
-        if (largeEntries.Length != 0)
-        {
-            int arrayIndex = index / 64;
-            int bitIndex = index % 64;
-            return (largeEntries[arrayIndex] & (1UL << bitIndex)) != 0;
-        }
-        else
-        {
-            return (entries & (1UL << index)) != 0;
-        }
-    }
-
-    private void UnsetEntry(T value)
-    {
-        int index = Array.IndexOf(possibleValues, value);
-        if (index == -1) return;
-
-        if (largeEntries.Length != 0)
-        {
-            int arrayIndex = index / 64;
-            int bitIndex = index % 64;
-            largeEntries[arrayIndex] &= ~(1UL << bitIndex);
-        }
-        else
-        {
-            entries &= ~(1UL << index);
-        }
-    }
+    private ulong entries;
 
     public EnumSet()
     {
-        possibleValues = Enum.GetValues<T>();
+        this.possibleValues = Enum.GetValues<T>();
 
-        if (possibleValues.Length > 64)
-            largeEntries = new ulong[(possibleValues.Length + 63) / 64];
+        if (this.possibleValues.Length > 64)
+        {
+            this.largeEntries = new ulong[(this.possibleValues.Length + 63) / 64];
+        }
         else
-            largeEntries = [];
+        {
+            this.largeEntries = [];
+        }
 
-        IsReadOnly = false;
-        parent = null;
+        this.IsReadOnly = false;
+        this.parent = null;
     }
 
     private EnumSet(EnumSet<T> parent)
@@ -146,38 +39,60 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
         this.parent = parent;
     }
 
+    public bool IsReadOnly { get; }
+
+    public int Count
+    {
+        get
+        {
+            // delegation case
+            if (this.IsReadOnly)
+            {
+                return this.parent!.Count;
+            }
+
+            // >64 entries case
+            if (this.largeEntries.Length != 0)
+            {
+                return this.largeEntries.Sum(BitOperations.PopCount);
+            }
+
+            // short case
+            return BitOperations.PopCount(this.entries);
+        }
+    }
+
     public bool Add(T item)
     {
-        if (!IsReadOnly)
-        {
-            bool alreadyHad = GetEntry(item);
-            SetEntry(item);
-            return !alreadyHad;
-        }
-        else
-        {
-            return parent!.Add(item);
-        }
+        this.CheckReadOnly();
+
+        bool alreadyHad = this.GetEntry(item);
+        this.SetEntry(item);
+        return !alreadyHad;
     }
 
     public void Clear()
     {
-        if (IsReadOnly) throw new NotSupportedException("Set is read-only.");
+        this.CheckReadOnly();
 
-        if (largeEntries.Length != 0)
+        if (this.largeEntries.Length != 0)
         {
-            Array.Clear(largeEntries);
+            Array.Clear(this.largeEntries);
         }
         else
         {
-            entries = 0;
+            this.entries = 0;
         }
     }
 
     public bool Contains(T item)
     {
-        if (!IsReadOnly) return GetEntry(item);
-        else return parent!.Contains(item);
+        if (this.IsReadOnly)
+        {
+            return this.parent!.Contains(item);
+        }
+
+        return this.GetEntry(item);
     }
 
     public void CopyTo(T[] array, int arrayIndex)
@@ -195,87 +110,63 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
     {
         foreach (T t in other)
         {
-            Remove(t);
+            this.Remove(t);
         }
     }
 
-    public IEnumerator<T> GetEnumerator() { return new EnumSetEnumerator(this); }
+    public IEnumerator<T> GetEnumerator() => new EnumSetEnumerator(this);
 
     public void IntersectWith(IEnumerable<T> other)
     {
+        T[] enumerable = other as T[] ?? other.ToArray();
+
         foreach (T t in this)
         {
-            if (!other.Contains(t)) this.Remove(t);
+            if (!enumerable.Contains(t)) this.Remove(t);
         }
     }
 
     public bool IsProperSubsetOf(IEnumerable<T> other)
     {
-        return IsSubsetOf(other) && !this.SetEquals(other);
+        T[] set = other.ToArray();
+        return this.IsSubsetOf(set) && !this.SetEquals(set);
     }
 
     public bool IsProperSupersetOf(IEnumerable<T> other)
     {
-        return IsSupersetOf(other) && !this.SetEquals(other);
+        T[] set = other.ToArray();
+        return this.IsSupersetOf(set) && !this.SetEquals(set);
     }
 
     public bool IsSubsetOf(IEnumerable<T> other)
     {
-        foreach (T t in this)
-        {
-            if (!other.Contains(t)) return false;
-        }
-
-        return true;
+        T[] set = other.ToArray();
+        return this.All(set.Contains);
     }
 
-    public bool IsSupersetOf(IEnumerable<T> other)
-    {
-        foreach (T t in other)
-        {
-            if (!this.Contains(t)) return false;
-        }
+    public bool IsSupersetOf(IEnumerable<T> other) => other.All(this.Contains);
 
-        return true;
-    }
-
-    public bool Overlaps(IEnumerable<T> other)
-    {
-        foreach (T t in this)
-        {
-            if (other.Contains(t)) return true;
-        }
-
-        return false;
-    }
+    public bool Overlaps(IEnumerable<T> other) => other.Any(this.Contains);
 
     public bool Remove(T item)
     {
-        if (!IsReadOnly)
-        {
-            bool had = this.GetEntry(item);
-            this.UnsetEntry(item);
-            return had;
-        }
-        else
-        {
-            return parent!.Remove(item);
-        }
+        this.CheckReadOnly();
+
+        bool had = this.GetEntry(item);
+        this.UnsetEntry(item);
+        return had;
     }
 
     public bool SetEquals(IEnumerable<T> other)
     {
-        foreach (T t in other)
+        T[] enumerable = other as T[] ?? other.ToArray();
+
+        if (enumerable.Any(t => !this.Contains(t)))
         {
-            if (!this.Contains(t)) return false;
+            return false;
         }
 
-        foreach (T t in this)
-        {
-            if (!other.Contains(t)) return false;
-        }
-
-        return true;
+        return this.All(enumerable.Contains) && enumerable.All(this.Contains);
     }
 
     public void SymmetricExceptWith(IEnumerable<T> other)
@@ -296,7 +187,64 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
     void ICollection<T>.Add(T item) { this.Add(item); }
 
-    IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+    private void SetEntry(T value)
+    {
+        int index = Array.IndexOf(this.possibleValues, value);
+        if (index == -1) return;
+
+        if (this.largeEntries.Length != 0)
+        {
+            int arrayIndex = index / 64;
+            int bitIndex = index % 64;
+            this.largeEntries[arrayIndex] |= 1UL << bitIndex;
+        }
+        else
+        {
+            this.entries |= 1UL << index;
+        }
+    }
+
+    private bool GetEntry(T value)
+    {
+        int index = Array.IndexOf(this.possibleValues, value);
+        if (index == -1) return false;
+
+        if (this.largeEntries.Length != 0)
+        {
+            int arrayIndex = index / 64;
+            int bitIndex = index % 64;
+            return (this.largeEntries[arrayIndex] & (1UL << bitIndex)) != 0;
+        }
+
+        return (this.entries & (1UL << index)) != 0;
+    }
+
+    private void UnsetEntry(T value)
+    {
+        int index = Array.IndexOf(this.possibleValues, value);
+        if (index == -1) return;
+
+        if (this.largeEntries.Length != 0)
+        {
+            int arrayIndex = index / 64;
+            int bitIndex = index % 64;
+            this.largeEntries[arrayIndex] &= ~(1UL << bitIndex);
+        }
+        else
+        {
+            this.entries &= ~(1UL << index);
+        }
+    }
+
+    private void CheckReadOnly()
+    {
+        if (this.IsReadOnly)
+        {
+            throw new NotSupportedException("Cannot modify a read-only set");
+        }
+    }
 
     public EnumSet<T> AsReadOnly()
     {
@@ -306,7 +254,7 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
     }
 
     /// <summary>
-    /// Creates a string representation of this object (a list of each individual entry).
+    ///     Creates a string representation of this object (a list of each individual entry).
     /// </summary>
     /// <returns></returns>
     public override string ToString()
@@ -322,5 +270,36 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
         builder[^1] = '}'; // replace last comma
         return builder.ToString();
+    }
+
+    private class EnumSetEnumerator(EnumSet<T> reference) : IEnumerator<T>
+    {
+        private int index = -1;
+
+        public T Current => this.index >= 0 && this.index < reference.possibleValues.Length
+            ? reference.possibleValues[this.index]
+            : default(T);
+
+        object IEnumerator.Current => this.Current;
+
+        public void Dispose()
+        {
+            // nothing to do
+        }
+
+        public bool MoveNext()
+        {
+            while (++this.index < reference.possibleValues.Length)
+            {
+                if (reference.Contains(reference.possibleValues[this.index]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void Reset() { this.index = -1; }
     }
 }

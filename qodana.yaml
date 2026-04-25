@@ -1,0 +1,28 @@
+####################################################################################################################
+# WARNING: Do not store sensitive information in this file, as its contents will be included in the Qodana report. #
+####################################################################################################################
+version: "1.0"
+profile:
+  name: qodana.starter
+include:
+  - name: ConvertIfStatementToConditionalTernaryExpression
+  - name: ArrangeThisQualifier
+  - name: AutoPropertyCanBeMadeGetOnly.Global
+  - name: AutoPropertyCanBeMadeGetOnly.Local
+  - name: ClassNeverInstantiated.Global
+  - name: ConvertToPrimaryConstructor
+  - name: FieldCanBeMadeReadOnly.Local
+  - name: ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+  - name: LoopCanBeConvertedToQuery
+  - name: MemberCanBePrivate.Global
+  - name: MemberCanBeProtected.Global
+  - name: MemberCanBeMadeStatic.Local
+  - name: RedundantIfElseBlock
+  - name: RedundantEmptyObjectCreationArgumentList
+  - name: RedundantTypeDeclarationBody
+  - name: ArrangeRedundantParentheses
+  - name: UnusedType.Global
+  - name: UnusedMember.Global
+  - name: SuggestVarOrType_SimpleTypes
+  - name: ArrangeTrailingCommaInMultilineLists
+  - name: ArrangeDefaultValueWhenTypeNotEvident

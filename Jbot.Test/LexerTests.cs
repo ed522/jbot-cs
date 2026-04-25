@@ -7,7 +7,14 @@ public class LexerTests
     [SetUp]
     public void Setup() { }
 
-    private string Space(string str) { return "   " + str + "  "; }
+    private static string Space(string str) => "   " + str + "  ";
+
+    [Test]
+    public void TestLexer_InvalidSymbol()
+    {
+        string input = Space("valid symbols *****");
+        Assert.Throws<SyntaxException>(() => Lexer.Parse(input));
+    }
 
     #region Lexer tests - individual symbols
 
@@ -104,7 +111,7 @@ public class LexerTests
     [Test]
     public void TestLexer_DeclBind()
     {
-        string input = this.Space("bind");
+        string input = Space("bind");
         Symbol[] output = Lexer.Parse(input);
 
         Assert.Multiple(() =>
@@ -119,7 +126,7 @@ public class LexerTests
     [Test]
     public void TestLexer_DeclField()
     {
-        string input = this.Space("field");
+        string input = Space("field");
         Symbol[] output = Lexer.Parse(input);
 
         Assert.Multiple(() =>
@@ -134,7 +141,7 @@ public class LexerTests
     [Test]
     public void TestLexer_DeclAllows()
     {
-        string input = this.Space("allows");
+        string input = Space("allows");
         Symbol[] output = Lexer.Parse(input);
 
         Assert.Multiple(() =>
@@ -149,7 +156,7 @@ public class LexerTests
     [Test]
     public void TestLexer_DeclType()
     {
-        string input = this.Space("type");
+        string input = Space("type");
         Symbol[] output = Lexer.Parse(input);
 
         Assert.Multiple(() =>
@@ -164,7 +171,7 @@ public class LexerTests
     [Test]
     public void TestLexer_BlockStart()
     {
-        string input = this.Space("id1{id2");
+        string input = Space("id1{id2");
         Symbol[] output = Lexer.Parse(input);
 
         Assert.Multiple(() =>
@@ -183,7 +190,7 @@ public class LexerTests
     [Test]
     public void TestLexer_BlockEnd()
     {
-        string input = this.Space("id1}id2");
+        string input = Space("id1}id2");
         Symbol[] output = Lexer.Parse(input);
 
         Assert.Multiple(() =>
@@ -202,7 +209,7 @@ public class LexerTests
     [Test]
     public void TestLexer_StatementEnd()
     {
-        string input = this.Space("id1;id2");
+        string input = Space("id1;id2");
         Symbol[] output = Lexer.Parse(input);
 
         Assert.Multiple(() =>
@@ -221,7 +228,7 @@ public class LexerTests
     [Test]
     public void TestLexer_DeclId()
     {
-        string input = this.Space("id1#id2");
+        string input = Space("id1#id2");
         Symbol[] output = Lexer.Parse(input);
 
         Assert.Multiple(() =>
@@ -276,11 +283,4 @@ public class LexerTests
     }
 
     #endregion
-
-    [Test]
-    public void TestLexer_InvalidSymbol()
-    {
-        string input = this.Space("valid symbols *****");
-        Assert.Throws<SyntaxException>(() => Lexer.Parse(input));
-    }
 }

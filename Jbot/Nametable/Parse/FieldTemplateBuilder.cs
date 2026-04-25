@@ -11,15 +11,17 @@ internal class FieldTemplateBuilder
 
     public void Check()
     {
-        if (AllowableTypes is null)
+        if (this.AllowableTypes is null)
         {
             throw new InvalidDocumentException("field is missing allowed types");
         }
-        else if (Name is null)
+
+        if (this.Name is null)
         {
             throw new InvalidDocumentException("field is missing name");
         }
-        else if (Id is null)
+
+        if (this.Id is null)
         {
             throw new InvalidDocumentException("field is missing id");
         }
@@ -27,19 +29,19 @@ internal class FieldTemplateBuilder
 
     public FieldTemplate? Build()
     {
-        if (AllowableTypes is null || Name is null || Id is null)
+        if (this.AllowableTypes is null || this.Name is null || this.Id is null)
         {
             return null;
         }
 
-        return new FieldTemplate()
+        return new FieldTemplate
         {
-            Id = (ushort)Id,
-            Name = Name,
-            AllowableTypes = [..AllowableTypes],
-            BoundMembers = BoundMembers?.ToArray(),
-            AllowedObjects = AllowedObjects?.ToArray(),
-            UseCompression = UseCompression ?? true
+            Id = (ushort)this.Id,
+            Name = this.Name,
+            AllowableTypes = [..this.AllowableTypes],
+            BoundMembers = this.BoundMembers?.ToArray(),
+            AllowedObjects = this.AllowedObjects?.ToArray(),
+            UseCompression = this.UseCompression ?? true,
         };
     }
 }

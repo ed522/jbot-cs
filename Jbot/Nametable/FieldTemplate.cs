@@ -1,28 +1,33 @@
+using JetBrains.Annotations;
+
 namespace Jbot.Nametable;
 
-public class FieldTemplate()
+[PublicAPI]
+public class FieldTemplate
 {
-    public required EnumSet<DataType> AllowableTypes { get; init; }
-    public required string Name { get; init; }
-    public required ushort Id { get; init; }
-    public IReadOnlyList<string>? BoundMembers { get; init; }
-    public IReadOnlyList<string>? AllowedObjects { get; init; }
-    public required bool UseCompression { get; init; }
-
-    public FieldTemplate(
+    internal FieldTemplate(
         ushort id, string name, DataType[] allowableTypes,
         string[]? boundMembers, string[]? allowedObjects, bool useCompression
     ) : this()
     {
-        AllowableTypes = ((EnumSet<DataType>)[..allowableTypes]).AsReadOnly();
-        Name = name;
-        Id = id;
-        BoundMembers = boundMembers?.AsReadOnly();
-        AllowedObjects = allowedObjects?.AsReadOnly();
-        UseCompression = useCompression;
+        this.AllowableTypes = ((EnumSet<DataType>)[..allowableTypes]).AsReadOnly();
+        this.Name = name;
+        this.Id = id;
+        this.BoundMembers = boundMembers?.AsReadOnly();
+        this.AllowedObjects = allowedObjects?.AsReadOnly();
+        this.UseCompression = useCompression;
     }
 
-    public bool AllowsType(DataType type) { return AllowableTypes.Contains(type); }
+    internal FieldTemplate() { }
+    public required EnumSet<DataType> AllowableTypes { get; init; }
+    public required string Name { get; init; }
+    public required ushort Id { get; init; }
+    public IReadOnlyCollection<string>? BoundMembers { get; init; }
+    public IReadOnlyCollection<string>? AllowedObjects { get; init; }
+    public required bool UseCompression { get; init; }
 
-    public override string ToString() { return $"[id={Id}, name={Name}, types={AllowableTypes}]"; }
+    public bool AllowsType(DataType type) => this.AllowableTypes.Contains(type);
+
+    public override string ToString() =>
+        $"[id={this.Id}, name={this.Name}, types={this.AllowableTypes}]";
 }

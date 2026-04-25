@@ -1,15 +1,15 @@
-﻿using static Jbot.Nametable.Parse.NodeType;
+﻿using Jbot.Nametable.Parse;
 
-using Jbot.Nametable.Parse;
+using static Jbot.Nametable.Parse.NodeType;
 
 namespace Jbot.Test;
 
 public class ParserTests
 {
     /// <summary>
-    /// Run a parameterized parser test. The input string is lexed and parsed,
-    /// and the output of the parser (the children of the root node) is
-    /// compared to the expected output.
+    ///     Run a parameterized parser test. The input string is lexed and parsed,
+    ///     and the output of the parser (the children of the root node) is
+    ///     compared to the expected output.
     /// </summary>
     /// <param name="input">the input to be parsed</param>
     /// <param name="expected">the expected output of the parser, in terms of the root's children</param>
@@ -183,7 +183,7 @@ public class ParserTests
                         new Node(FIELD_ATTRIBUTE, "attr2"),
                     ]),
                 ]),
-            ])
+            ]),
         ]);
 
     [Test]

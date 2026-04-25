@@ -19,9 +19,9 @@ internal class Node(NodeType type, string value, ICollection<Node> children)
     public Node(NodeType type) : this(type, "", []) { }
     public Node(NodeType type, string value) : this(type, value, []) { }
     public Node(NodeType type, ICollection<Node> children) : this(type, "", children) { }
-    public NodeType Type { get; init; } = type;
-    public string Value { get; init; } = value;
-    public ImmutableHashSet<Node> Children { get; init; } = [..children];
+    public NodeType Type { get; } = type;
+    public string Value { get; } = value;
+    public ImmutableHashSet<Node> Children { get; } = [..children];
 
     public static bool operator ==(Node? left, Node? right)
     {
@@ -32,32 +32,26 @@ internal class Node(NodeType type, string value, ICollection<Node> children)
 
     public static bool operator !=(Node? left, Node? right) => !(left == right);
 
-    public override bool Equals(object? other)
-    {
-        return other is Node n
-            && n.Type == this.Type
-            && n.Value == this.Value
-            && n.Children.SetEquals(this.Children);
-    }
+    public override bool Equals(object? other) =>
+        other is Node n
+     && n.Type == this.Type
+     && n.Value == this.Value
+     && n.Children.SetEquals(this.Children);
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
+        HashCode hash = new();
         hash.Add(this.Type);
         hash.Add(this.Value);
 
-        int childrenHash = 0;
-
-        foreach (var child in this.Children)
-            childrenHash ^= child.GetHashCode(); // XOR is order-independent
+        int childrenHash
+            = this.Children.Aggregate(0, (state, child) => state ^ child.GetHashCode());
 
         hash.Add(childrenHash);
+
         return hash.ToHashCode();
     }
 
-    public override string ToString()
-    {
-        return
-            $"type={this.Type}, value={this.Value}, children=[{string.Join(", ", this.Children)}]";
-    }
+    public override string ToString() =>
+        $"type={this.Type}, value={this.Value}, children=[{string.Join(", ", this.Children)}]";
 }

@@ -1,17 +1,10 @@
+using JetBrains.Annotations;
+
 namespace Jbot.Nametable;
 
+[PublicAPI]
 public class Nametable
 {
-    public IList<ObjectTemplate> Objects { get; }
-    public uint Version { get; }
-    public bool UsesShortIds { get; }
-    public bool AllowsCompression { get; }
-
-    /// <summary>
-    /// Add a checksum to messages that were serialized using this table.
-    /// </summary>
-    public bool UsesChecksum { get; }
-
     internal Nametable(
         ObjectTemplate[] objects, uint version, bool allowsCompression, bool usesChecksum
     ) :
@@ -36,6 +29,16 @@ public class Nametable
         this.UsesShortIds = !objects.Any(o => o.Id > byte.MaxValue);
         this.Objects = ((ObjectTemplate[])[..objects]).AsReadOnly();
     }
+
+    public IReadOnlyCollection<ObjectTemplate> Objects { get; }
+    public uint Version { get; }
+    public bool UsesShortIds { get; }
+    public bool AllowsCompression { get; }
+
+    /// <summary>
+    ///     Add a checksum to messages that were serialized using this table.
+    /// </summary>
+    public bool UsesChecksum { get; }
 
     public ObjectTemplate? GetObjectOrNull(ushort id)
     {
@@ -63,9 +66,6 @@ public class Nametable
         return null;
     }
 
-    public override string ToString()
-    {
-        return
-            $"[version={this.Version}, usesShortIds={this.UsesShortIds}, objects={this.Objects}]";
-    }
+    public override string ToString() =>
+        $"[version={this.Version}, usesShortIds={this.UsesShortIds}, objects={this.Objects}]";
 }

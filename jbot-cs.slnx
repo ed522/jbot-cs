@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="Jbot/jbot-cs.csproj" />
-  <Project Path="Jbot.Test/jbot-cs-test.csproj">
-    <BuildDependency Project="Jbot/jbot-cs.csproj" />
-  </Project>
+    <Project Path="Jbot/jbot-cs.csproj"/>
+    <Project Path="Jbot.Test/jbot-cs-test.csproj">
+        <BuildDependency Project="Jbot/jbot-cs.csproj"/>
+    </Project>
 </Solution>

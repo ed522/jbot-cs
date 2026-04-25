@@ -1,33 +1,53 @@
 using System.Numerics;
 
+using JetBrains.Annotations;
+
 namespace Jbot;
 
+[PublicAPI]
 public class DataValue
 {
+    // lots of repetitive definitions
+    public DataValue() { this.SetNull(); }
+
+    public DataValue(DataObject value) { this.Set(value); }
+
+    public DataValue(DataArray value) { this.Set(value); }
+
+    public DataValue(byte[] value) { this.Set(value); }
+
+    public DataValue(string value) { this.Set(value); }
+
+    public DataValue(bool value) { this.Set(value); }
+
+    public DataValue(sbyte value) { this.Set(value); }
+
+    public DataValue(short value) { this.Set(value); }
+
+    public DataValue(int value) { this.Set(value); }
+
+    public DataValue(long value) { this.Set(value); }
+
+    public DataValue(byte value) { this.Set(value); }
+
+    public DataValue(ushort value) { this.Set(value); }
+
+    public DataValue(uint value) { this.Set(value); }
+
+    public DataValue(ulong value) { this.Set(value); }
+
+    public DataValue(float value) { this.Set(value); }
+
+    public DataValue(double value) { this.Set(value); }
+
+    public DataValue(decimal value) { this.Set(value); }
+
+    public DataValue(BigInteger value) { this.Set(value); }
+
     protected object? Value { get; set; }
     public virtual DataType Type { get; protected set; }
 
-    public bool IsOfType(DataType type) => Type == type;
-
-    // lots of repetitive definitions
-    public DataValue() => this.SetNull();
-    public DataValue(DataObject value) => this.Set(value);
-    public DataValue(DataArray value) => this.Set(value);
-    public DataValue(byte[] value) => this.Set(value);
-    public DataValue(string value) => this.Set(value);
-    public DataValue(bool value) => this.Set(value);
-    public DataValue(sbyte value) => this.Set(value);
-    public DataValue(short value) => this.Set(value);
-    public DataValue(int value) => this.Set(value);
-    public DataValue(long value) => this.Set(value);
-    public DataValue(byte value) => this.Set(value);
-    public DataValue(ushort value) => this.Set(value);
-    public DataValue(uint value) => this.Set(value);
-    public DataValue(ulong value) => this.Set(value);
-    public DataValue(float value) => this.Set(value);
-    public DataValue(double value) => this.Set(value);
-    public DataValue(decimal value) => this.Set(value);
-    public DataValue(BigInteger value) => this.Set(value);
+    public bool IsOfType(DataType type) => this.Type == type;
 
     public void SetNull()
     {
@@ -175,5 +195,5 @@ public class DataValue
     public decimal? GetAsDecimal() => this.Value as decimal?;
     public BigInteger? GetAsBigInteger() => this.Value as BigInteger?;
 
-    public override string ToString() { return $"{this.Type}: {this.Value}"; }
+    public override string ToString() => $"{this.Type}: {this.Value}";
 }

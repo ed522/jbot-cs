@@ -1,3 +1,3 @@
 namespace Jbot.Nametable.Parse;
 
-public class SyntaxException(string message) : InvalidDocumentException(message) { }
+public class SyntaxException(string message) : InvalidDocumentException(message);

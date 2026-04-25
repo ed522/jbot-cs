@@ -11,30 +11,52 @@ internal class ObjectTemplateBuilder
 
     public void Check()
     {
-        if (Id is null)
+        if (this.Id is null)
         {
             throw new InvalidDocumentException("object is missing id");
         }
-        else if (Fields is null || Fields.Count == 0)
+
+        if (this.Fields is null || this.Fields.Count == 0)
         {
             throw new InvalidDocumentException("object is missing fields");
+        }
+
+        if (this.Name is null)
+        {
+            throw new InvalidDocumentException("object is missing name");
         }
     }
 
     public ObjectTemplate? Build()
     {
-        if (Id is null || Fields is null)
+        if (this.Id is null || this.Fields is null || this.Name is null)
         {
             return null;
         }
 
-        if (Fields.Any(f => f.Id > byte.MaxValue) && (ForcesShortIds ?? false))
+        if ((this.ForcesShortIds ?? false) && this.Fields.Any(f => f.Id > byte.MaxValue))
         {
             throw new InvalidDocumentException(
                 "cannot use short IDs if a field has an ID over 255");
         }
 
-        return new ObjectTemplate((ushort)Id, Name, BoundTypeNames?.ToArray(), [..Fields],
-            UseCompression ?? true);
+        this.UseCompression ??= true;
+        this.ForcesShortIds ??= false;
+
+        if ((bool)this.ForcesShortIds)
+        {
+            return new ObjectTemplate
+            {
+                Id = (ushort)this.Id,
+                Name = this.Name,
+                BoundTypeNames = this.BoundTypeNames?.AsReadOnly(),
+                Fields = this.Fields.AsReadOnly(),
+                UseCompression = this.UseCompression ?? true,
+                UsesShortIds = this.ForcesShortIds ?? false,
+            };
+        }
+
+        return new ObjectTemplate((ushort)this.Id, this.Name, this.BoundTypeNames?.AsReadOnly(),
+            this.Fields.AsReadOnly(), (bool)this.UseCompression);
     }
 }

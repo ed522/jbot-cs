@@ -1,5 +1,8 @@
+using JetBrains.Annotations;
+
 namespace Jbot.Nametable.Parse;
 
+[PublicAPI]
 public static class NametableCompiler
 {
     public static Nametable CompileFile(string path)

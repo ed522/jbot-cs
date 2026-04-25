@@ -4,9 +4,24 @@ namespace Jbot.Nametable.Parse;
 
 internal class Parser(Symbol[] symbols)
 {
-    private uint _nextIndex;
-    private readonly HashSet<Node> _currentNodes = []; // mutable
     private readonly HashSet<Node> _currentAttributeNodes = []; // mutable
+    private readonly HashSet<Node> _currentNodes = []; // mutable
+    private uint _nextIndex;
+
+    public Node Parse()
+    {
+        while (this._nextIndex < symbols.Length) this.Statement();
+
+        if (this._currentAttributeNodes.Count > 0)
+        {
+            this._currentNodes.Add(new Node(NodeType.TOP_LEVEL_ATTRIBUTE_SET,
+                this._currentAttributeNodes));
+        }
+
+        return new Node(NodeType.ROOT, this._currentNodes);
+    }
+
+    public static Node Parse(Symbol[] symbols) => new Parser(symbols).Parse();
 
     #region Parser helpers - peek consume etc.
 
@@ -30,7 +45,7 @@ internal class Parser(Symbol[] symbols)
         return symbols[this._nextIndex++];
     }
 
-    private bool Has(SymbolType type) { return this.Peek().type == type; }
+    private bool Has(SymbolType type) => this.Peek().type == type;
 
     private bool Accept(SymbolType type)
     {
@@ -83,11 +98,10 @@ internal class Parser(Symbol[] symbols)
     private HashSet<Node> DocumentAttributeDeclaration()
     {
         // looks like: `attrib attr1 [attr2...] ;`
-        // Node attributeNode = new(NodeType.TOP_LEVEL_ATTRIBUTE_SET, "", []);
         HashSet<Node> currentChildren =
         [
             // must have at least 1 attribute
-            new(NodeType.TOP_LEVEL_ATTRIBUTE, this.ExpectAndGet(IDENTIFIER).value, []),
+            new(NodeType.TOP_LEVEL_ATTRIBUTE, this.ExpectAndGet(IDENTIFIER).value),
         ];
 
         while (this.Has(IDENTIFIER))
@@ -95,7 +109,7 @@ internal class Parser(Symbol[] symbols)
             Symbol identifier = this.Consume();
 
             currentChildren.Add(
-                new Node(NodeType.TOP_LEVEL_ATTRIBUTE, identifier.value, [])
+                new Node(NodeType.TOP_LEVEL_ATTRIBUTE, identifier.value)
             );
         }
 
@@ -109,7 +123,7 @@ internal class Parser(Symbol[] symbols)
         Symbol versionNumber = this.ExpectAndGet(NUMBER);
         this.Expect(STATEMENT_END);
 
-        return new Node(NodeType.VERSION, versionNumber.value, []);
+        return new Node(NodeType.VERSION, versionNumber.value);
     }
 
     private HashSet<Node> ObjectAttributeDeclaration()
@@ -118,7 +132,7 @@ internal class Parser(Symbol[] symbols)
 
         while (this.Has(IDENTIFIER))
         {
-            attributes.Add(new Node(NodeType.OBJECT_ATTRIBUTE, this.Consume().value, []));
+            attributes.Add(new Node(NodeType.OBJECT_ATTRIBUTE, this.Consume().value));
         }
 
         this.Expect(STATEMENT_END);
@@ -129,13 +143,13 @@ internal class Parser(Symbol[] symbols)
     {
         HashSet<Node> currentChildren =
         [
-            new(NodeType.OBJECT_BIND_TARGET, this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []),
+            new(NodeType.OBJECT_BIND_TARGET, this.ExpectAndGet(DESCENDING_IDENTIFIER).value),
         ];
 
         while (this.Has(DESCENDING_IDENTIFIER))
         {
             currentChildren.Add(new Node(NodeType.OBJECT_BIND_TARGET,
-                this.Consume().value, []));
+                this.Consume().value));
         }
 
         this.Expect(STATEMENT_END);
@@ -147,13 +161,12 @@ internal class Parser(Symbol[] symbols)
     {
         HashSet<Node> currentChildren =
         [
-            new(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value, []),
+            new(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value),
         ];
 
         while (this.Accept(TYPE_SEPARATOR))
         {
-            currentChildren.Add(new Node(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value,
-                []));
+            currentChildren.Add(new Node(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value));
         }
 
         return currentChildren;
@@ -163,13 +176,13 @@ internal class Parser(Symbol[] symbols)
     {
         HashSet<Node> currentChildren =
         [
-            new(NodeType.FIELD_ALLOWED_OBJECT, this.ExpectAndGet(IDENTIFIER).value, []),
+            new(NodeType.FIELD_ALLOWED_OBJECT, this.ExpectAndGet(IDENTIFIER).value),
         ];
 
         while (this.Accept(TYPE_SEPARATOR))
         {
             currentChildren.Add(new Node(NodeType.FIELD_ALLOWED_OBJECT,
-                this.ExpectAndGet(IDENTIFIER).value, []));
+                this.ExpectAndGet(IDENTIFIER).value));
         }
 
         return currentChildren;
@@ -182,12 +195,12 @@ internal class Parser(Symbol[] symbols)
         this.Expect(DECL_FIELD_BIND);
 
         currentChildren.Add(new Node(NodeType.FIELD_BIND_TARGET,
-            this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
+            this.ExpectAndGet(DESCENDING_IDENTIFIER).value));
 
         while (this.Accept(DECL_FIELD_BIND))
         {
             currentChildren.Add(new Node(NodeType.FIELD_BIND_TARGET,
-                this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []));
+                this.ExpectAndGet(DESCENDING_IDENTIFIER).value));
         }
 
         return currentChildren;
@@ -197,13 +210,12 @@ internal class Parser(Symbol[] symbols)
     {
         HashSet<Node> currentChildren =
         [
-            new(NodeType.FIELD_ATTRIBUTE, this.ExpectAndGet(IDENTIFIER).value, []),
+            new(NodeType.FIELD_ATTRIBUTE, this.ExpectAndGet(IDENTIFIER).value),
         ];
 
         while (this.Has(IDENTIFIER))
         {
-            currentChildren.Add(new Node(NodeType.FIELD_ATTRIBUTE, this.Consume().value,
-                []));
+            currentChildren.Add(new Node(NodeType.FIELD_ATTRIBUTE, this.Consume().value));
         }
 
         return currentChildren;
@@ -213,7 +225,7 @@ internal class Parser(Symbol[] symbols)
     {
         HashSet<Node> currentChildren =
         [
-            new(NodeType.FIELD_ID, this.ExpectAndGet(IDENTIFIER).value, []),
+            new(NodeType.FIELD_ID, this.ExpectAndGet(IDENTIFIER).value),
         ];
 
         HashSet<Node> currentAttributes = [];
@@ -252,16 +264,24 @@ internal class Parser(Symbol[] symbols)
         {
             // set everything here before returning
             if (currentTypes.Count > 0)
+            {
                 currentChildren.Add(new Node(NodeType.FIELD_TYPE_SET, currentTypes));
+            }
 
             if (currentAllows.Count > 0)
+            {
                 currentChildren.Add(new Node(NodeType.FIELD_ALLOWS, currentAllows));
+            }
 
             if (currentBinds.Count > 0)
+            {
                 currentChildren.Add(new Node(NodeType.FIELD_BIND, currentBinds));
+            }
 
             if (currentAttributes.Count > 0)
+            {
                 currentChildren.Add(new Node(NodeType.FIELD_ATTRIBUTE_SET, currentAttributes));
+            }
 
             return new Node(NodeType.FIELD, currentChildren);
         }
@@ -299,16 +319,24 @@ internal class Parser(Symbol[] symbols)
 
         // deduplicate, and don't bother adding an extra node if there are none
         if (currentTypes.Count > 0)
+        {
             currentChildren.Add(new Node(NodeType.FIELD_TYPE_SET, currentTypes));
+        }
 
         if (currentAllows.Count > 0)
+        {
             currentChildren.Add(new Node(NodeType.FIELD_ALLOWS, currentAllows));
+        }
 
         if (currentBinds.Count > 0)
+        {
             currentChildren.Add(new Node(NodeType.FIELD_BIND, currentBinds));
+        }
 
         if (currentAttributes.Count > 0)
+        {
             currentChildren.Add(new Node(NodeType.FIELD_ATTRIBUTE_SET, currentAttributes));
+        }
 
         return new Node(NodeType.FIELD, currentChildren);
     }
@@ -320,12 +348,12 @@ internal class Parser(Symbol[] symbols)
         HashSet<Node> currentBinds = [];
 
         Symbol name = this.ExpectAndGet(IDENTIFIER);
-        currentNodes.Add(new Node(NodeType.OBJECT_NAME, name.value, []));
+        currentNodes.Add(new Node(NodeType.OBJECT_NAME, name.value));
 
         if (this.Accept(DECL_ID))
         {
             currentNodes.Add(new Node(NodeType.OBJECT_ID,
-                this.ExpectAndGet(NUMBER).value, []));
+                this.ExpectAndGet(NUMBER).value));
         }
 
         this.Expect(BLOCK_START);
@@ -347,10 +375,14 @@ internal class Parser(Symbol[] symbols)
             else if (this.Accept(BLOCK_END))
             {
                 if (currentAttributes.Count > 0)
+                {
                     currentNodes.Add(new Node(NodeType.OBJECT_ATTRIBUTE_SET, currentAttributes));
+                }
 
                 if (currentBinds.Count > 0)
+                {
                     currentNodes.Add(new Node(NodeType.OBJECT_BIND, currentBinds));
+                }
 
                 return new Node(NodeType.OBJECT, currentNodes);
             }
@@ -382,17 +414,4 @@ internal class Parser(Symbol[] symbols)
     }
 
     #endregion
-
-    public Node Parse()
-    {
-        while (this._nextIndex < symbols.Length) this.Statement();
-
-        if (this._currentAttributeNodes.Count > 0)
-            this._currentNodes.Add(new Node(NodeType.TOP_LEVEL_ATTRIBUTE_SET,
-                this._currentAttributeNodes));
-
-        return new Node(NodeType.ROOT, this._currentNodes);
-    }
-
-    public static Node Parse(Symbol[] symbols) { return new Parser(symbols).Parse(); }
 }

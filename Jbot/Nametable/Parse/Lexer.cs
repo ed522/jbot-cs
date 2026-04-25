@@ -78,26 +78,24 @@ internal static partial class Lexer
                 {
                     return new Symbol(SymbolType.NUMBER, token);
                 }
-                else if (IdentifierMatchRegex().Match(token).Success)
+
+                if (IdentifierMatchRegex().Match(token).Success)
                 {
                     return new Symbol(SymbolType.IDENTIFIER, token);
                 }
-                else if (DescendingIdentifierMatchRegex().Match(token).Success)
+
+                if (DescendingIdentifierMatchRegex().Match(token).Success)
                 {
                     return new Symbol(SymbolType.DESCENDING_IDENTIFIER, token);
                 }
-                else
-                {
-                    throw new SyntaxException("invalid symbol " + token);
-                }
+
+                throw new SyntaxException("invalid symbol " + token);
         }
     }
 
-    public static Symbol[] Parse(string str)
-    {
+    public static Symbol[] Parse(string str) =>
         // tersely: splits the string, then for each token, evaluates it (makes it a symbol)
-        return [..Scan(str).Select(Evaluate)];
-    }
+        [..Scan(str).Select(Evaluate)];
 
     [GeneratedRegex(@"\A[a-zA-Z_][a-zA-Z0-9_]*\z")]
     private static partial Regex IdentifierMatchRegex();
