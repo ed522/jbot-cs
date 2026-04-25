@@ -145,10 +145,43 @@ internal static class Compiler
 
                     foreach (Node child in node.Children)
                     {
-                        ThrowIfContains(currentField.AllowableTypes,
-                            Enum.Parse<DataType>(child.Value), nameof(currentField.AllowableTypes));
+                        // wildcard - incompatible with others & accepts everything (both except 
+                        // null)
+                        if (child.Value == "ANY")
+                        {
+                            // - there are no types: not more than one type, and the nonexistent 
+                            // first value is faked as NULL
+                            // - there is one non-null field: not more than one type, but first 
+                            // value != NULL
+                            // - there is only null: not more than one type, and it's null
+                            // - there are two types: more than one type (short-circuit)
+                            if (currentField.AllowableTypes.Count > 1 ||
+                                currentField.AllowableTypes.FirstOrDefault(DataType.NULL) !=
+                                DataType.NULL)
+                            {
+                                throw new InvalidDocumentException("cannot define type ANY if " +
+                                                                   "other specifiers are present");
+                            }
 
-                        currentField.AllowableTypes.Add(Enum.Parse<DataType>(child.Value));
+                            currentField.AllowableTypes.UnionWith(Enum.GetValues<DataType>()
+                                .Where(t => t != DataType.NULL));
+                            break;
+                        }
+
+                        DataType type = Enum.Parse<DataType>(child.Value);
+
+                        // possibly questionable, but NULL is special so it can be an attribute
+                        if (type == DataType.NULL)
+                        {
+                            throw new InvalidDocumentException("cannot specify type NULL, use " +
+                                                               "nulllable attribute instead");
+                        }
+
+                        // disallow duplicate types
+                        ThrowIfContains(currentField.AllowableTypes, type,
+                            nameof(currentField.AllowableTypes));
+
+                        currentField.AllowableTypes.Add(type);
                     }
 
                     break;
