@@ -7,17 +7,16 @@ public class LexerTests
     [SetUp]
     public void Setup() { }
 
-    private string Space(string str)
-    {
-        return "   " + str + "  ";
-    }
+    private string Space(string str) { return "   " + str + "  "; }
 
     #region Lexer tests - individual symbols
+
     [Test]
     public void TestLexer_Identifier()
     {
         string input = Space("Some_Identifier");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -32,6 +31,7 @@ public class LexerTests
     {
         string input = Space("12345");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -46,6 +46,7 @@ public class LexerTests
     {
         string input = Space("some.descending.identifier");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -60,6 +61,7 @@ public class LexerTests
     {
         string input = Space("version");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -74,6 +76,7 @@ public class LexerTests
     {
         string input = Space("attrib");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -88,6 +91,7 @@ public class LexerTests
     {
         string input = Space("object");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -102,6 +106,7 @@ public class LexerTests
     {
         string input = this.Space("bind");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -116,6 +121,7 @@ public class LexerTests
     {
         string input = this.Space("field");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -130,6 +136,7 @@ public class LexerTests
     {
         string input = this.Space("allows");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -144,6 +151,7 @@ public class LexerTests
     {
         string input = this.Space("type");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -158,6 +166,7 @@ public class LexerTests
     {
         string input = this.Space("id1{id2");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -176,6 +185,7 @@ public class LexerTests
     {
         string input = this.Space("id1}id2");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -194,6 +204,7 @@ public class LexerTests
     {
         string input = this.Space("id1;id2");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -212,6 +223,7 @@ public class LexerTests
     {
         string input = this.Space("id1#id2");
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -230,6 +242,7 @@ public class LexerTests
     {
         const string input = "id1,id2";
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -248,6 +261,7 @@ public class LexerTests
     {
         const string input = "id1$id2";
         Symbol[] output = Lexer.Parse(input);
+
         Assert.Multiple(() =>
         {
             Assert.That(output, Is.Not.EqualTo(null));
@@ -260,6 +274,7 @@ public class LexerTests
             Assert.That(output[2].value, Is.EqualTo("id2"));
         });
     }
+
     #endregion
 
     [Test]

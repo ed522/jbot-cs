@@ -6,10 +6,12 @@ internal enum NametableAttribute
 {
     NO_CRC, NO_COMPRESSION
 }
+
 internal enum ObjectAttribute
 {
     FORCE_SHORT_IDS, NO_COMPRESSION
 }
+
 internal enum FieldAttribute
 {
     NO_COMPRESSION, NULLABLE
@@ -17,39 +19,45 @@ internal enum FieldAttribute
 
 internal static class Attributes
 {
-
     private static readonly Dictionary<string, NametableAttribute> nametableNames = new()
     {
         { "nocrc", NametableAttribute.NO_CRC },
         { "nocompress", NametableAttribute.NO_COMPRESSION }
     };
+
     private static readonly Dictionary<string, ObjectAttribute> objectNames = new()
     {
         { "short", ObjectAttribute.FORCE_SHORT_IDS },
         { "nocompress", ObjectAttribute.NO_COMPRESSION }
     };
+
     private static readonly Dictionary<string, FieldAttribute> fieldNames = new()
     {
         { "nocompress", FieldAttribute.NO_COMPRESSION },
         { "nullable", FieldAttribute.NULLABLE }
     };
-    
+
     public static NametableAttribute ParseNametableAttribute(string str)
     {
         if (!nametableNames.TryGetValue(str, out NametableAttribute value))
             throw new InvalidDocumentException("unknown nametable attribute " + str);
+
         return value;
     }
+
     public static ObjectAttribute ParseObjectAttribute(string str)
     {
         if (!objectNames.TryGetValue(str, out ObjectAttribute value))
             throw new InvalidDocumentException("unknown object attribute " + str);
+
         return value;
     }
+
     public static FieldAttribute ParseFieldAttribute(string str)
     {
         if (!fieldNames.TryGetValue(str, out FieldAttribute value))
             throw new InvalidDocumentException("unknown field attribute " + str);
+
         return value;
     }
 
@@ -65,6 +73,7 @@ internal static class Attributes
 
         throw new ArgumentOutOfRangeException(nameof(attrib));
     }
+
     public static string GetName(ObjectAttribute attrib)
     {
         foreach (KeyValuePair<string, ObjectAttribute> pair in objectNames)
@@ -77,6 +86,7 @@ internal static class Attributes
 
         throw new ArgumentOutOfRangeException(nameof(attrib));
     }
+
     public static string GetName(FieldAttribute attrib)
     {
         foreach (KeyValuePair<string, FieldAttribute> pair in fieldNames)
@@ -89,5 +99,4 @@ internal static class Attributes
 
         throw new ArgumentOutOfRangeException(nameof(attrib));
     }
-
 }

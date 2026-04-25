@@ -7,7 +7,7 @@ internal class Parser(Symbol[] symbols)
     private uint _nextIndex;
     private readonly HashSet<Node> _currentNodes = []; // mutable
     private readonly HashSet<Node> _currentAttributeNodes = []; // mutable
-    
+
     #region Parser helpers - peek consume etc.
 
     private Symbol Peek()
@@ -98,6 +98,7 @@ internal class Parser(Symbol[] symbols)
                 new Node(NodeType.TOP_LEVEL_ATTRIBUTE, identifier.value, [])
             );
         }
+
         this.Expect(STATEMENT_END);
 
         return currentChildren;
@@ -126,7 +127,7 @@ internal class Parser(Symbol[] symbols)
 
     private HashSet<Node> ObjectBindDeclaration()
     {
-        HashSet<Node> currentChildren = 
+        HashSet<Node> currentChildren =
         [
             new(NodeType.OBJECT_BIND_TARGET, this.ExpectAndGet(DESCENDING_IDENTIFIER).value, []),
         ];
@@ -136,14 +137,15 @@ internal class Parser(Symbol[] symbols)
             currentChildren.Add(new Node(NodeType.OBJECT_BIND_TARGET,
                 this.Consume().value, []));
         }
+
         this.Expect(STATEMENT_END);
-        
+
         return currentChildren;
     }
 
     private HashSet<Node> FieldTypeDeclaration()
     {
-        HashSet<Node> currentChildren = 
+        HashSet<Node> currentChildren =
         [
             new(NodeType.FIELD_TYPE, this.ExpectAndGet(IDENTIFIER).value, []),
         ];
@@ -251,12 +253,16 @@ internal class Parser(Symbol[] symbols)
             // set everything here before returning
             if (currentTypes.Count > 0)
                 currentChildren.Add(new Node(NodeType.FIELD_TYPE_SET, currentTypes));
+
             if (currentAllows.Count > 0)
                 currentChildren.Add(new Node(NodeType.FIELD_ALLOWS, currentAllows));
+
             if (currentBinds.Count > 0)
                 currentChildren.Add(new Node(NodeType.FIELD_BIND, currentBinds));
+
             if (currentAttributes.Count > 0)
                 currentChildren.Add(new Node(NodeType.FIELD_ATTRIBUTE_SET, currentAttributes));
+
             return new Node(NodeType.FIELD, currentChildren);
         }
 
@@ -288,15 +294,19 @@ internal class Parser(Symbol[] symbols)
                 ThrowUnexpectedSymbol(this.Peek());
             }
         }
+
         this.Expect(BLOCK_END);
 
         // deduplicate, and don't bother adding an extra node if there are none
         if (currentTypes.Count > 0)
             currentChildren.Add(new Node(NodeType.FIELD_TYPE_SET, currentTypes));
+
         if (currentAllows.Count > 0)
             currentChildren.Add(new Node(NodeType.FIELD_ALLOWS, currentAllows));
+
         if (currentBinds.Count > 0)
             currentChildren.Add(new Node(NodeType.FIELD_BIND, currentBinds));
+
         if (currentAttributes.Count > 0)
             currentChildren.Add(new Node(NodeType.FIELD_ATTRIBUTE_SET, currentAttributes));
 
@@ -338,9 +348,10 @@ internal class Parser(Symbol[] symbols)
             {
                 if (currentAttributes.Count > 0)
                     currentNodes.Add(new Node(NodeType.OBJECT_ATTRIBUTE_SET, currentAttributes));
+
                 if (currentBinds.Count > 0)
                     currentNodes.Add(new Node(NodeType.OBJECT_BIND, currentBinds));
-                
+
                 return new Node(NodeType.OBJECT, currentNodes);
             }
             else
@@ -375,8 +386,11 @@ internal class Parser(Symbol[] symbols)
     public Node Parse()
     {
         while (this._nextIndex < symbols.Length) this.Statement();
+
         if (this._currentAttributeNodes.Count > 0)
-            this._currentNodes.Add(new Node(NodeType.TOP_LEVEL_ATTRIBUTE_SET, this._currentAttributeNodes));
+            this._currentNodes.Add(new Node(NodeType.TOP_LEVEL_ATTRIBUTE_SET,
+                this._currentAttributeNodes));
+
         return new Node(NodeType.ROOT, this._currentNodes);
     }
 

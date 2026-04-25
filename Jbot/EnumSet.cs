@@ -8,18 +8,15 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 {
     private class EnumSetEnumerator : IEnumerator<T>
     {
-        public T Current => (index >= 0 && index < reference.possibleValues.Length) 
-            ? reference.possibleValues[index] 
+        public T Current => (index >= 0 && index < reference.possibleValues.Length)
+            ? reference.possibleValues[index]
             : default;
 
         private readonly EnumSet<T> reference;
         object IEnumerator.Current => Current;
         private int index = -1;
 
-        public EnumSetEnumerator(EnumSet<T> reference)
-        {
-            this.reference = reference;
-        }
+        public EnumSetEnumerator(EnumSet<T> reference) { this.reference = reference; }
 
         public void Dispose()
         {
@@ -33,13 +30,11 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
                 if (reference.Contains(reference.possibleValues[index]))
                     return true;
             }
+
             return false;
         }
 
-        public void Reset()
-        {
-            index = -1;
-        }
+        public void Reset() { index = -1; }
     }
 
     private ulong entries;
@@ -48,6 +43,7 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
     private readonly EnumSet<T>? parent;
     public bool IsReadOnly { get; private set; }
+
     public int Count
     {
         get
@@ -61,10 +57,12 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
                 else
                 {
                     int val = 0;
+
                     foreach (ulong i in largeEntries)
                     {
                         val += BitOperations.PopCount(i);
                     }
+
                     return val;
                 }
             }
@@ -132,12 +130,13 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
 
         if (possibleValues.Length > 64)
             largeEntries = new ulong[(possibleValues.Length + 63) / 64];
-        else 
+        else
             largeEntries = [];
 
         IsReadOnly = false;
         parent = null;
     }
+
     private EnumSet(EnumSet<T> parent)
     {
         this.largeEntries = [];
@@ -164,7 +163,7 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
     public void Clear()
     {
         if (IsReadOnly) throw new NotSupportedException("Set is read-only.");
-        
+
         if (largeEntries.Length != 0)
         {
             Array.Clear(largeEntries);
@@ -184,6 +183,7 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
     public void CopyTo(T[] array, int arrayIndex)
     {
         int i = arrayIndex;
+
         foreach (T t in this)
         {
             array[i] = t;
@@ -199,10 +199,7 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
         }
     }
 
-    public IEnumerator<T> GetEnumerator()
-    {
-        return new EnumSetEnumerator(this);
-    }
+    public IEnumerator<T> GetEnumerator() { return new EnumSetEnumerator(this); }
 
     public void IntersectWith(IEnumerable<T> other)
     {
@@ -228,6 +225,7 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
         {
             if (!other.Contains(t)) return false;
         }
+
         return true;
     }
 
@@ -237,6 +235,7 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
         {
             if (!this.Contains(t)) return false;
         }
+
         return true;
     }
 
@@ -246,6 +245,7 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
         {
             if (other.Contains(t)) return true;
         }
+
         return false;
     }
 
@@ -269,10 +269,12 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
         {
             if (!this.Contains(t)) return false;
         }
+
         foreach (T t in this)
         {
             if (!other.Contains(t)) return false;
         }
+
         return true;
     }
 
@@ -292,21 +294,15 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
         }
     }
 
-    void ICollection<T>.Add(T item)
-    {
-        this.Add(item);
-    }
+    void ICollection<T>.Add(T item) { this.Add(item); }
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+    IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
     public EnumSet<T> AsReadOnly()
     {
-        #pragma warning disable IDE0028 // Simplify collection initialization
+#pragma warning disable IDE0028 // Simplify collection initialization
         return new EnumSet<T>(this);
-        #pragma warning restore IDE0028 // Simplify collection initialization
+#pragma warning restore IDE0028 // Simplify collection initialization
     }
 
     /// <summary>
@@ -323,8 +319,8 @@ public class EnumSet<T> : ISet<T> where T : struct, Enum
             builder.Append(t.ToString());
             builder.Append(',');
         }
+
         builder[^1] = '}'; // replace last comma
         return builder.ToString();
     }
-    
 }

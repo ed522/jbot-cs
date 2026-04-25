@@ -2,7 +2,6 @@ namespace Jbot.Nametable.Parse;
 
 internal class ObjectTemplateBuilder
 {
-    
     public ushort? Id { get; set; }
     public bool? ForcesShortIds { get; set; }
     public string? Name { get; set; } // nullable
@@ -31,10 +30,11 @@ internal class ObjectTemplateBuilder
 
         if (Fields.Any(f => f.Id > byte.MaxValue) && (ForcesShortIds ?? false))
         {
-            throw new InvalidDocumentException("cannot use short IDs if a field has an ID over 255");
+            throw new InvalidDocumentException(
+                "cannot use short IDs if a field has an ID over 255");
         }
 
-        return new ObjectTemplate((ushort) Id, Name, BoundTypeNames?.ToArray(), [..Fields], UseCompression ?? true);
+        return new ObjectTemplate((ushort)Id, Name, BoundTypeNames?.ToArray(), [..Fields],
+            UseCompression ?? true);
     }
-
 }

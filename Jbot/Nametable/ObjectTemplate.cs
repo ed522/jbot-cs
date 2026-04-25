@@ -4,7 +4,6 @@ namespace Jbot.Nametable;
 
 public class ObjectTemplate
 {
-    
     public ushort Id { get; private init; }
     public bool UsesShortIds { get; private init; }
     public bool UseCompression { get; private init; }
@@ -24,7 +23,10 @@ public class ObjectTemplate
 
         foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
         {
-            Type? possibleType = (from t in a.GetTypes() where BoundTypeNames.Contains(t.FullName) select t).FirstOrDefault();
+            Type? possibleType
+                = (from t in a.GetTypes() where BoundTypeNames.Contains(t.FullName) select t)
+                .FirstOrDefault();
+
             if (possibleType != default)
             {
                 _boundType = possibleType;
@@ -35,26 +37,23 @@ public class ObjectTemplate
         return null;
     }
 
-    public ObjectTemplate(ushort id, string? name, string[]? boundTypeNames, FieldTemplate[] fields, bool useCompression)
+    public ObjectTemplate(
+        ushort id, string? name, string[]? boundTypeNames, FieldTemplate[] fields,
+        bool useCompression
+    )
     {
         Id = id;
         Name = name;
         BoundTypeNames = boundTypeNames;
         UseCompression = useCompression;
         UsesShortIds = !fields.Any(f => f.Id > byte.MaxValue);
-        
+
         FieldTemplate[] clonedFields = [..fields];
         Fields = clonedFields.AsReadOnly();
     }
 
-    public bool HasName()
-    {
-        return Name != null;
-    }
-    public bool HasBoundType()
-    {
-        return BoundTypeNames != null && BoundTypeNames?.Length > 0;
-    }
+    public bool HasName() { return Name != null; }
+    public bool HasBoundType() { return BoundTypeNames != null && BoundTypeNames?.Length > 0; }
 
     public FieldTemplate? GetFieldOrNull(ushort id)
     {
@@ -68,6 +67,7 @@ public class ObjectTemplate
 
         return null;
     }
+
     public FieldTemplate? GetFieldOrNull(string name)
     {
         foreach (FieldTemplate field in Fields)
@@ -83,7 +83,7 @@ public class ObjectTemplate
 
     public override string ToString()
     {
-        return $"[id={Id}, name={Name}, boundType={BoundTypeNames}, usesShortIds={UsesShortIds}, fields={Fields}]";
+        return
+            $"[id={Id}, name={Name}, boundType={BoundTypeNames}, usesShortIds={UsesShortIds}, fields={Fields}]";
     }
-
 }

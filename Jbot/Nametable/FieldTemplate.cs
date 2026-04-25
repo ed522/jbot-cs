@@ -10,11 +10,11 @@ public class FieldTemplate()
     public required bool UseCompression { get; init; }
 
     public FieldTemplate(
-        ushort id, string name, DataType[] allowableTypes, 
+        ushort id, string name, DataType[] allowableTypes,
         string[]? boundMembers, string[]? allowedObjects, bool useCompression
-    ): this()
+    ) : this()
     {
-        AllowableTypes = ((EnumSet<DataType>) [..allowableTypes]).AsReadOnly();
+        AllowableTypes = ((EnumSet<DataType>)[..allowableTypes]).AsReadOnly();
         Name = name;
         Id = id;
         BoundMembers = boundMembers?.AsReadOnly();
@@ -22,14 +22,7 @@ public class FieldTemplate()
         UseCompression = useCompression;
     }
 
-    public bool AllowsType(DataType type)
-    {
-        return AllowableTypes.Contains(type);
-    }
+    public bool AllowsType(DataType type) { return AllowableTypes.Contains(type); }
 
-    public override string ToString()
-    {
-        return $"[id={Id}, name={Name}, types={AllowableTypes}]";
-    }
-
+    public override string ToString() { return $"[id={Id}, name={Name}, types={AllowableTypes}]"; }
 }

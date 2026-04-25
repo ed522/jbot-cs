@@ -12,17 +12,19 @@ internal static partial class Lexer
     private const string TYPE_SEPARATOR = ",";
     private const string DECL_FIELD_BIND = "$";
 
-    private static readonly string[] BREAKING_SYMBOLS = 
+    private static readonly string[] BREAKING_SYMBOLS =
         [BLOCK_START, BLOCK_END, STATEMENT_END, DECL_ID, TYPE_SEPARATOR, DECL_FIELD_BIND];
-    
+
     private static string[] Scan(string input)
     {
         List<string> tokens = [];
         StringBuilder currentToken = new();
         int currentIndex = 0;
+
         while (currentIndex < input.Length)
         {
             char currentChar = input[currentIndex];
+
             if (char.IsWhiteSpace(currentChar) || BREAKING_SYMBOLS.Contains($"{currentChar}"))
             {
                 // finalize token if there already is one
@@ -31,6 +33,7 @@ internal static partial class Lexer
                     tokens.Add(currentToken.ToString());
                     currentToken = new StringBuilder();
                 }
+
                 if (BREAKING_SYMBOLS.Contains($"{currentChar}"))
                 {
                     // directly add the token since it's one character long
@@ -42,8 +45,10 @@ internal static partial class Lexer
             {
                 currentToken.Append(currentChar);
             }
+
             currentIndex++;
         }
+
         // if there's an extra token add it
         if (currentToken.Length > 0) tokens.Add(currentToken.ToString());
 
@@ -67,6 +72,7 @@ internal static partial class Lexer
             case DECL_ID: return new Symbol(SymbolType.DECL_ID, token);
             case TYPE_SEPARATOR: return new Symbol(SymbolType.TYPE_SEPARATOR, token);
             case DECL_FIELD_BIND: return new Symbol(SymbolType.DECL_FIELD_BIND, token);
+
             default:
                 if (NumberMatchRegex().Match(token).Success)
                 {
@@ -95,8 +101,10 @@ internal static partial class Lexer
 
     [GeneratedRegex(@"\A[a-zA-Z_][a-zA-Z0-9_]*\z")]
     private static partial Regex IdentifierMatchRegex();
+
     [GeneratedRegex(@"\A[a-zA-Z_\.][a-zA-Z0-9_\.]*\z")]
     private static partial Regex DescendingIdentifierMatchRegex();
+
     [GeneratedRegex(@"\A[0-9]*\z")]
     private static partial Regex NumberMatchRegex();
 }

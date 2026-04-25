@@ -2,11 +2,11 @@ namespace Jbot.Nametable.Parse;
 
 internal static class Compiler
 {
-
     private static void InvalidState(Node node)
     {
         throw new SyntaxException("did not expect token " + node.Type + " here, bug in parser?");
     }
+
     private static void ThrowIfSet(object? value, string name)
     {
         if (value != null)
@@ -22,11 +22,16 @@ internal static class Compiler
             throw new InvalidDocumentException($"already defined {value} in {listName}");
         }
     }
-    private static void ThrowIfContains<T>(ICollection<T> list, Func<T, bool> predicate, string propName, string propValue, string listName)
+
+    private static void ThrowIfContains<T>(
+        ICollection<T> list, Func<T, bool> predicate, string propName, string propValue,
+        string listName
+    )
     {
         if (list.Any(predicate))
         {
-            throw new InvalidDocumentException($"already defined an entry with {propName} of {propValue} in {listName}");
+            throw new InvalidDocumentException(
+                $"already defined an entry with {propName} of {propValue} in {listName}");
         }
     }
 
@@ -34,48 +39,62 @@ internal static class Compiler
     private static List<NametableAttribute> ParseDocumentAttributeSet(Node set)
     {
         List<NametableAttribute> nametableAttributes = [];
+
         foreach (Node node in set.Children)
         {
             if (node.Type != NodeType.TOP_LEVEL_ATTRIBUTE)
             {
                 InvalidState(node);
             }
+
             NametableAttribute attrib = Attributes.ParseNametableAttribute(node.Value);
+
             if (nametableAttributes.Contains(attrib))
             {
-                throw new InvalidDocumentException("already defined attribute " + Attributes.GetName(attrib));
+                throw new InvalidDocumentException("already defined attribute " +
+                                                   Attributes.GetName(attrib));
             }
+
             nametableAttributes.Add(attrib);
         }
+
         return nametableAttributes;
     }
+
     private static ObjectAttribute[] ParseObjectAttributeSet(Node set)
     {
         List<ObjectAttribute> attributes = [];
+
         foreach (Node node in set.Children)
         {
             if (node.Type != NodeType.OBJECT_ATTRIBUTE)
             {
                 InvalidState(node);
             }
+
             attributes.Add(Attributes.ParseObjectAttribute(node.Value));
         }
+
         return [..attributes];
     }
 
     private static FieldAttribute[] ParseFieldAttributeSet(Node set)
     {
         List<FieldAttribute> attributes = [];
+
         foreach (Node node in set.Children)
         {
             if (node.Type != NodeType.FIELD_ATTRIBUTE)
             {
                 InvalidState(node);
             }
+
             attributes.Add(Attributes.ParseFieldAttribute(node.Value));
         }
+
         return [..attributes];
     }
+
     private static FieldTemplateBuilder ParseField(Node field)
     {
         FieldTemplateBuilder currentField = new();
@@ -96,7 +115,10 @@ internal static class Compiler
 
                 case NodeType.FIELD_ALLOWED_OBJECT:
                     currentField.AllowedObjects ??= [];
-                    ThrowIfContains(currentField.AllowedObjects, node.Value, nameof(currentField.AllowedObjects));
+
+                    ThrowIfContains(currentField.AllowedObjects, node.Value,
+                        nameof(currentField.AllowedObjects));
+
                     currentField.AllowedObjects.Add(node.Value);
                     break;
 
@@ -115,29 +137,39 @@ internal static class Compiler
 
                 case NodeType.FIELD_BIND_TARGET:
                     currentField.BoundMembers ??= [];
-                    ThrowIfContains(currentField.BoundMembers, node.Value, nameof(currentField.BoundMembers));
+
+                    ThrowIfContains(currentField.BoundMembers, node.Value,
+                        nameof(currentField.BoundMembers));
+
                     currentField.BoundMembers.Add(node.Value);
                     break;
 
                 case NodeType.FIELD_ATTRIBUTE_SET:
                     FieldAttribute[] attributes = ParseFieldAttributeSet(node);
+
                     // add attributes
                     foreach (FieldAttribute attrib in attributes)
                     {
                         switch (attrib)
                         {
                             case FieldAttribute.NO_COMPRESSION:
-                                ThrowIfSet(currentField.UseCompression, nameof(currentField.UseCompression));
+                                ThrowIfSet(currentField.UseCompression,
+                                    nameof(currentField.UseCompression));
+
                                 currentField.UseCompression = false;
                                 break;
+
                             case FieldAttribute.NULLABLE:
                                 if (currentField.AllowableTypes?.Contains(DataType.NULL) ?? false)
                                 {
-                                    throw new InvalidDocumentException("field is already defined as nullable");
+                                    throw new InvalidDocumentException(
+                                        "field is already defined as nullable");
                                 }
+
                                 currentField.AllowableTypes ??= [];
                                 currentField.AllowableTypes.Add(DataType.NULL);
                                 break;
+
                             default:
                                 InvalidState(node);
                                 break;
@@ -145,6 +177,7 @@ internal static class Compiler
                     }
 
                     break;
+
                 default:
                     InvalidState(node);
                     break;
@@ -176,30 +209,41 @@ internal static class Compiler
 
                 case NodeType.OBJECT_BIND_TARGET:
                     currentObject.BoundTypeNames ??= [];
-                    ThrowIfContains(currentObject.BoundTypeNames, node.Value, nameof(currentObject.BoundTypeNames));
+
+                    ThrowIfContains(currentObject.BoundTypeNames, node.Value,
+                        nameof(currentObject.BoundTypeNames));
+
                     currentObject.BoundTypeNames.Add(node.Value);
                     break;
 
                 case NodeType.OBJECT_ATTRIBUTE_SET:
                     ObjectAttribute[] attributes = ParseObjectAttributeSet(node);
+
                     // add attributes
                     foreach (ObjectAttribute attrib in attributes)
                     {
                         switch (attrib)
                         {
                             case ObjectAttribute.FORCE_SHORT_IDS:
-                                ThrowIfSet(currentObject.ForcesShortIds, nameof(currentObject.ForcesShortIds));
+                                ThrowIfSet(currentObject.ForcesShortIds,
+                                    nameof(currentObject.ForcesShortIds));
+
                                 currentObject.ForcesShortIds = true;
                                 break;
+
                             case ObjectAttribute.NO_COMPRESSION:
-                                ThrowIfSet(currentObject.UseCompression, nameof(currentObject.UseCompression));
+                                ThrowIfSet(currentObject.UseCompression,
+                                    nameof(currentObject.UseCompression));
+
                                 currentObject.UseCompression = false;
                                 break;
+
                             default:
                                 InvalidState(node);
                                 break; // not necessary
                         }
                     }
+
                     break;
 
                 case NodeType.FIELD:
@@ -208,18 +252,25 @@ internal static class Compiler
                     // means: if the current object is unbound but the field is, complain
                     // also do so if the current object is bound but the field is missing its bind targets
 
-                    if ((currentObject.BoundTypeNames?.Count ?? 0) == 0 && (fieldBuilder.BoundMembers?.Count ?? 0) >= 0)
+                    if ((currentObject.BoundTypeNames?.Count ?? 0) == 0 &&
+                        (fieldBuilder.BoundMembers?.Count ?? 0) >= 0)
                     {
-                        throw new InvalidDocumentException($"cannot bind field {fieldBuilder.Name} to a member if the object has no bind target");
+                        throw new InvalidDocumentException(
+                            $"cannot bind field {fieldBuilder.Name} to a member if the object has no bind target");
                     }
-                    if ((currentObject.BoundTypeNames?.Count ?? 0) >= 0 && (fieldBuilder.BoundMembers?.Count ?? 0) == 0)
+
+                    if ((currentObject.BoundTypeNames?.Count ?? 0) >= 0 &&
+                        (fieldBuilder.BoundMembers?.Count ?? 0) == 0)
                     {
-                        throw new InvalidDocumentException($"field {fieldBuilder.Name} has no bind target when object is bound");
+                        throw new InvalidDocumentException(
+                            $"field {fieldBuilder.Name} has no bind target when object is bound");
                     }
+
                     // if field has no ID, auto assign. increment if auto-assigned or using the auto-assign ID since it's not in the list.
                     // go through the list and keep incrementing as long as there's one that already has the next ID.
                     fieldBuilder.Id ??= lowestFieldId;
                     if (fieldBuilder.Id == lowestFieldId) lowestFieldId++;
+
                     while (currentObject.Fields.Any(f => lowestFieldId == f.Id))
                     {
                         fieldBuilder.Id ??= lowestFieldId;
@@ -233,10 +284,11 @@ internal static class Compiler
                     // Access to modified closure: not applicable since lambda is immediately run
                     ThrowIfContains(
                         // ReSharper disable AccessToModifiedClosure
-                        currentObject.Fields, f => field.Id == f.Id, 
+                        currentObject.Fields, f => field.Id == f.Id,
                         // ReSharper restore AccessToModifiedClosure
                         nameof(field.Id), field.Id.ToString(), nameof(currentObject.Fields)
                     );
+
                     currentObject.Fields.Add(field);
                     break;
 
@@ -256,6 +308,7 @@ internal static class Compiler
         List<NametableAttribute> nametableAttributes = [];
         uint? version = null;
         ushort lowestId = 0;
+
         foreach (Node node in root.Children)
         {
             switch (node.Type)
@@ -273,6 +326,7 @@ internal static class Compiler
                     ObjectTemplateBuilder builder = ParseObject(node);
                     builder.Id ??= lowestId;
                     if (builder.Id == lowestId) lowestId++;
+
                     while (objects.Any(o => lowestId == o.Id))
                     {
                         lowestId++;
@@ -280,13 +334,15 @@ internal static class Compiler
 
                     builder.Check();
                     ObjectTemplate obj = builder.Build()!;
+
                     // if there's already a field with this ID, throw
                     // inspection: same reason as above, lambda gets run immediately so there's no danger
                     ThrowIfContains(
                         // ReSharper disable once AccessToModifiedClosure
-                        objects, f => f.Id == obj.Id, 
+                        objects, f => f.Id == obj.Id,
                         nameof(obj.Id), obj.Id.ToString(), nameof(objects)
                     );
+
                     objects.Add(obj);
                     break;
 
@@ -296,11 +352,11 @@ internal static class Compiler
             }
         }
 
-        version ??= uint.MaxValue; // not 0 since that could conceivably be used for v0, this is a good canary
-        return new Nametable([..objects], (uint) version,
+        version ??= uint
+            .MaxValue; // not 0 since that could conceivably be used for v0, this is a good canary
+
+        return new Nametable([..objects], (uint)version,
             !nametableAttributes.Contains(NametableAttribute.NO_COMPRESSION),
             !nametableAttributes.Contains(NametableAttribute.NO_CRC));
-        
     }
-
 }

@@ -34,86 +34,103 @@ public class DataValue
         this.Type = DataType.NULL;
         this.Value = null;
     }
+
     public void Set(DataObject value)
     {
         this.Type = DataType.OBJECT;
         this.Value = value;
     }
+
     public void Set(DataArray value)
     {
         this.Type = DataType.ARRAY;
         this.Value = value;
     }
+
     public void Set(byte[] value)
     {
         this.Type = DataType.BINARY;
         this.Value = value;
     }
+
     public void Set(string value)
     {
         this.Type = DataType.STRING;
         this.Value = value;
     }
+
     public void Set(bool value)
     {
         this.Type = DataType.BOOLEAN;
         this.Value = value;
     }
+
     public void Set(sbyte value)
     {
         this.Type = DataType.BYTE;
         this.Value = value;
     }
+
     public void Set(short value)
     {
         this.Type = DataType.SHORT;
         this.Value = value;
     }
+
     public void Set(int value)
     {
         this.Type = DataType.INT;
         this.Value = value;
     }
+
     public void Set(long value)
     {
         this.Type = DataType.LONG;
         this.Value = value;
     }
+
     public void Set(byte value)
     {
         this.Type = DataType.UBYTE;
         this.Value = value;
     }
+
     public void Set(ushort value)
     {
         this.Type = DataType.USHORT;
         this.Value = value;
     }
+
     public void Set(uint value)
     {
         this.Type = DataType.UINT;
         this.Value = value;
     }
+
     public void Set(ulong value)
     {
         this.Type = DataType.ULONG;
         this.Value = value;
     }
+
     public void Set(float value)
     {
         this.Type = DataType.FLOAT;
         this.Value = value;
     }
+
     public void Set(double value)
     {
         this.Type = DataType.DOUBLE;
         this.Value = value;
     }
+
     public void Set(decimal value)
     {
         this.Type = DataType.DECIMAL;
         this.Value = value;
     }
+
     public void Set(BigInteger value)
     {
         this.Type = DataType.BIGINT;
@@ -158,9 +175,5 @@ public class DataValue
     public decimal? GetAsDecimal() => this.Value as decimal?;
     public BigInteger? GetAsBigInteger() => this.Value as BigInteger?;
 
-    public override string ToString()
-    {
-        return $"{this.Type}: {this.Value}";
-    }
-
+    public override string ToString() { return $"{this.Type}: {this.Value}"; }
 }

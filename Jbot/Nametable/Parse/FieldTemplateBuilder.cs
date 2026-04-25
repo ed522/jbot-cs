@@ -2,7 +2,6 @@ namespace Jbot.Nametable.Parse;
 
 public class FieldTemplateBuilder
 {
-
     public EnumSet<DataType>? AllowableTypes { get; set; }
     public List<string>? AllowedObjects { get; set; }
     public List<string>? BoundMembers { get; set; }
@@ -25,6 +24,7 @@ public class FieldTemplateBuilder
             throw new InvalidDocumentException("field is missing id");
         }
     }
+
     public FieldTemplate? Build()
     {
         if (AllowableTypes is null || Name is null || Id is null)
@@ -34,7 +34,7 @@ public class FieldTemplateBuilder
 
         return new FieldTemplate()
         {
-            Id = (ushort) Id,
+            Id = (ushort)Id,
             Name = Name,
             AllowableTypes = [..AllowableTypes],
             BoundMembers = BoundMembers?.ToArray(),
@@ -42,5 +42,4 @@ public class FieldTemplateBuilder
             UseCompression = UseCompression ?? true
         };
     }
-
 }

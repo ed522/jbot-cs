@@ -1,6 +1,3 @@
 namespace Jbot;
 
-public class DataArray
-{
-    
-}
+public class DataArray { }

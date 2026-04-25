@@ -1,6 +1,3 @@
 namespace Jbot;
 
-public class DataObject
-{
-
-}
+public class DataObject { }
