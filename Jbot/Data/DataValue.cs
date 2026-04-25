@@ -7,47 +7,35 @@ namespace Jbot.Data;
 [PublicAPI]
 public class DataValue
 {
-    // lots of repetitive definitions
-    public DataValue() { this.SetNull(); }
+    #region Constructors (per-type)
 
-    public DataValue(DataObject value) { this.Set(value); }
+    public DataValue() => this.SetNull();
+    public DataValue(DataObject value) => this.Set(value);
+    public DataValue(DataArray value) => this.Set(value);
+    public DataValue(byte[] value) => this.Set(value);
+    public DataValue(string value) => this.Set(value);
+    public DataValue(bool value) => this.Set(value);
+    public DataValue(sbyte value) => this.Set(value);
+    public DataValue(short value) => this.Set(value);
+    public DataValue(int value) => this.Set(value);
+    public DataValue(long value) => this.Set(value);
+    public DataValue(byte value) => this.Set(value);
+    public DataValue(ushort value) => this.Set(value);
+    public DataValue(uint value) => this.Set(value);
+    public DataValue(ulong value) => this.Set(value);
+    public DataValue(float value) => this.Set(value);
+    public DataValue(double value) => this.Set(value);
+    public DataValue(decimal value) => this.Set(value);
+    public DataValue(BigInteger value) => this.Set(value);
 
-    public DataValue(DataArray value) { this.Set(value); }
-
-    public DataValue(byte[] value) { this.Set(value); }
-
-    public DataValue(string value) { this.Set(value); }
-
-    public DataValue(bool value) { this.Set(value); }
-
-    public DataValue(sbyte value) { this.Set(value); }
-
-    public DataValue(short value) { this.Set(value); }
-
-    public DataValue(int value) { this.Set(value); }
-
-    public DataValue(long value) { this.Set(value); }
-
-    public DataValue(byte value) { this.Set(value); }
-
-    public DataValue(ushort value) { this.Set(value); }
-
-    public DataValue(uint value) { this.Set(value); }
-
-    public DataValue(ulong value) { this.Set(value); }
-
-    public DataValue(float value) { this.Set(value); }
-
-    public DataValue(double value) { this.Set(value); }
-
-    public DataValue(decimal value) { this.Set(value); }
-
-    public DataValue(BigInteger value) { this.Set(value); }
+    #endregion
 
     protected object? Value { get; set; }
     public virtual DataType Type { get; protected set; }
 
     public bool IsOfType(DataType type) => this.Type == type;
+
+    #region Setters
 
     public void SetNull()
     {
@@ -157,7 +145,11 @@ public class DataValue
         this.Value = value;
     }
 
+    #endregion
+
     public bool IsNull() => this.Value is null;
+
+    #region Casting accessors
 
     public DataObject? GetObject() => (DataObject?)this.Value;
     public DataArray? GetArray() => (DataArray?)this.Value;
@@ -177,6 +169,10 @@ public class DataValue
     public decimal? GetDecimal() => (decimal?)this.Value;
     public BigInteger? GetBigInteger() => (BigInteger?)this.Value;
 
+    #endregion
+
+    #region Safe accessors
+
     public DataObject? GetAsObject() => this.Value as DataObject;
     public DataArray? GetAsArray() => this.Value as DataArray;
     public byte[]? GetAsBinary() => this.Value as byte[];
@@ -194,6 +190,8 @@ public class DataValue
     public double? GetAsDouble() => this.Value as double?;
     public decimal? GetAsDecimal() => this.Value as decimal?;
     public BigInteger? GetAsBigInteger() => this.Value as BigInteger?;
+
+    #endregion
 
     public override string ToString() => $"{this.Type}: {this.Value}";
 }
