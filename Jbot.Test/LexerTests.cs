@@ -5,10 +5,7 @@ namespace Jbot.Test;
 public class LexerTests
 {
     [SetUp]
-    public void Setup()
-    {
-        Console.WriteLine("Tests start");
-    }
+    public void Setup() { }
 
     private string Space(string str)
     {
