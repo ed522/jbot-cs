@@ -5,8 +5,8 @@ public class FieldTemplate()
     public required EnumSet<DataType> AllowableTypes { get; init; }
     public required string Name { get; init; }
     public required ushort Id { get; init; }
-    public IList<string>? BoundMembers { get; init; }
-    public IList<string>? AllowedObjects { get; init; }
+    public IReadOnlyList<string>? BoundMembers { get; init; }
+    public IReadOnlyList<string>? AllowedObjects { get; init; }
     public required bool UseCompression { get; init; }
 
     public FieldTemplate(
