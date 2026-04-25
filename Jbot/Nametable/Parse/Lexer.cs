@@ -93,10 +93,10 @@ internal static partial class Lexer
         return [..Scan(str).Select(Evaluate)];
     }
 
-    [GeneratedRegex("[a-zA-Z_]+")]
+    [GeneratedRegex(@"\A[a-zA-Z_][a-zA-Z0-9_]+\z")]
     private static partial Regex IdentifierMatchRegex();
-    [GeneratedRegex("[a-zA-Z_\\.]+")]
+    [GeneratedRegex(@"\A[a-zA-Z_\.][a-zA-Z0-9_\.]+\z")]
     private static partial Regex DescendingIdentifierMatchRegex();
-    [GeneratedRegex("[0-9]+")]
+    [GeneratedRegex(@"\A[0-9]+\z")]
     private static partial Regex NumberMatchRegex();
 }
