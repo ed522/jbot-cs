@@ -6,15 +6,21 @@ public class Nametable
     public uint Version { get; private set; }
     public bool UsesShortIds { get; private set; }
     public bool AllowsCompression { get; private set; }
-    public bool UsesCRC { get; private set; }
 
-    internal Nametable(ObjectTemplate[] objects, uint version, bool allowsCompression, bool usesCRC)
+    /// <summary>
+    /// Add a checksum to messages that were serialized using this table.
+    /// </summary>
+    public bool UsesChecksum { get; private set; }
+
+    internal Nametable(
+        ObjectTemplate[] objects, uint version, bool allowsCompression, bool usesChecksum
+    )
     {
         Objects = ((ObjectTemplate[])[..objects]).AsReadOnly();
         UsesShortIds = !objects.Any(o => o.Id > byte.MaxValue);
         Version = version;
         AllowsCompression = allowsCompression;
-        UsesCRC = usesCRC;
+        this.UsesChecksum = usesChecksum;
     }
 
     public Nametable(uint version, ObjectTemplate[] objects)

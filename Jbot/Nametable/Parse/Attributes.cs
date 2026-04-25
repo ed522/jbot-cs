@@ -4,7 +4,7 @@ namespace Jbot.Nametable;
 
 internal enum NametableAttribute
 {
-    NO_CRC, NO_COMPRESSION
+    NO_CHECKSUM, CHECKSUM, NO_COMPRESSION
 }
 
 internal enum ObjectAttribute
@@ -21,7 +21,8 @@ internal static class Attributes
 {
     private static readonly Dictionary<string, NametableAttribute> nametableNames = new()
     {
-        { "nocrc", NametableAttribute.NO_CRC },
+        { "nochecksum", NametableAttribute.NO_CHECKSUM },
+        { "checksum", NametableAttribute.CHECKSUM },
         { "nocompress", NametableAttribute.NO_COMPRESSION }
     };
 
