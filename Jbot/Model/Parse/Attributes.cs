@@ -1,4 +1,4 @@
-namespace Jbot.Nametable.Parse;
+namespace Jbot.Model.Parse;
 
 internal enum NametableAttribute
 {

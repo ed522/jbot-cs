@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace Jbot.Nametable.Parse;
+namespace Jbot.Model.Parse;
 
 [PublicAPI]
 public static class NametableCompiler

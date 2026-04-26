@@ -1,6 +1,8 @@
-﻿using Jbot.Nametable.Parse;
+﻿using Jbot.Model.Parse;
 
-using static Jbot.Nametable.Parse.NodeType;
+using static Jbot.Model.Parse.NodeType;
+
+using Lexer = Jbot.Model.Parse.Lexer;
 
 namespace Jbot.Test;
 

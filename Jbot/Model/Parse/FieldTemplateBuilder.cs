@@ -1,7 +1,7 @@
 using Jbot.Data;
 using Jbot.Utils;
 
-namespace Jbot.Nametable.Parse;
+namespace Jbot.Model.Parse;
 
 internal class FieldTemplateBuilder
 {

@@ -1,4 +1,4 @@
-using Jbot.Nametable;
+using Jbot.Model;
 
 using JetBrains.Annotations;
 

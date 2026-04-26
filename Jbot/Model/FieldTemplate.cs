@@ -3,7 +3,7 @@ using Jbot.Utils;
 
 using JetBrains.Annotations;
 
-namespace Jbot.Nametable;
+namespace Jbot.Model;
 
 [PublicAPI]
 public class FieldTemplate

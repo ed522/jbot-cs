@@ -1,6 +1,6 @@
-using static Jbot.Nametable.Parse.SymbolType;
+using static Jbot.Model.Parse.SymbolType;
 
-namespace Jbot.Nametable.Parse;
+namespace Jbot.Model.Parse;
 
 internal class Parser(Symbol[] symbols)
 {

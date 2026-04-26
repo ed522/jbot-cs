@@ -3,7 +3,7 @@ using System.Reflection;
 
 using JetBrains.Annotations;
 
-namespace Jbot.Nametable;
+namespace Jbot.Model;
 
 [PublicAPI]
 public class ObjectTemplate

@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace Jbot.Nametable.Parse;
+namespace Jbot.Model.Parse;
 
 internal enum NodeType
 {

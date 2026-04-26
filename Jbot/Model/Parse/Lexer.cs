@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Jbot.Nametable.Parse;
+namespace Jbot.Model.Parse;
 
 internal static partial class Lexer
 {

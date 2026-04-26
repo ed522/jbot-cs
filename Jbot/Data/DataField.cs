@@ -1,6 +1,6 @@
 using System.Numerics;
 
-using Jbot.Nametable;
+using Jbot.Model;
 using Jbot.Utils;
 
 using JetBrains.Annotations;
