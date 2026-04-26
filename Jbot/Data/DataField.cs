@@ -10,9 +10,20 @@ namespace Jbot.Data;
 [PublicAPI]
 public sealed class DataField : AbstractDataValue
 {
+    private DataType _type = DataType.UNINITIALIZED;
+
+    // NOTE: value is not validated to be of the right type! be careful when using this constructor
+    private DataField(FieldTemplate template, DataType type, object? value)
+    {
+        this.Template = template;
+        this.Type = type;
+        this.Value = value;
+    }
+
+    // does not initialize with any value/type
+    private DataField(FieldTemplate template) => this.Template = template;
     public FieldTemplate Template { get; }
 
-    private DataType _type = DataType.UNINITIALIZED;
     public override DataType Type
     {
         get => this._type;
@@ -33,25 +44,47 @@ public sealed class DataField : AbstractDataValue
         }
     }
 
-    // NOTE: value is not validated to be of the right type! be careful when using this constructor
-    private DataField(FieldTemplate template, DataType type, object? value)
-    {
-        this.Template = template;
-        this.Type = type;
-        this.Value = value;
-    }
-
-    // does not initialize with any value/type
-    private DataField(FieldTemplate template) => this.Template = template;
     /// <summary>
-    /// Create a new DataField that is uninitialized. The type will be set to `UNINITIALIZED` and
-    /// any attempt to access the value will return `null`. <br />
-    /// This is not a constructor because uninitialized values should only be created in specific
-    /// circumstances.
+    ///     Create a new DataField that is uninitialized. The type will be set to `UNINITIALIZED` and
+    ///     any attempt to access the value will return `null`. <br />
+    ///     This is not a constructor because uninitialized values should only be created in specific
+    ///     circumstances.
     /// </summary>
     /// <param name="template"></param>
     /// <returns></returns>
     internal static DataField ofUninitialized(FieldTemplate template) => new(template);
+
+    public override DataField Clone()
+    {
+        if (this.Value is ICloneable o)
+        {
+            return new DataField(this.Template, this.Type, o.Clone());
+        }
+
+        return new DataField(this.Template, this.Type, this.Value);
+    }
+
+    public void Validate()
+    {
+        // bad inspection here
+        // ReSharper disable once ConvertIfStatementToSwitchStatement
+        if (this.Type == DataType.UNINITIALIZED)
+        {
+            throw new InvalidOperationException($"Field '{this.Template.Name}' is uninitialized");
+        }
+
+        if (this.Type == DataType.OBJECT && this.Value is DataObject dataObject)
+        {
+            if (this.Template.AllowedObjects is { Count: > 0 } &&
+                !this.Template.AllowedObjects.Contains(dataObject.Template.Name))
+            {
+                throw new InvalidOperationException(
+                    $"Field '{this.Template.Name}' has object '{dataObject.Template.Name}', " +
+                    $"which must be (but is not) one of " +
+                    $"[{string.Join(", ", this.Template.AllowedObjects)}]");
+            }
+        }
+    }
 
     #region Helper constructors (with predefined value)
 
@@ -77,34 +110,4 @@ public sealed class DataField : AbstractDataValue
     public DataField(FieldTemplate template, BigInteger value) : this(template) => this.Set(value);
 
     #endregion
-
-    public override DataField Clone()
-    {
-        if (this.Value is ICloneable o)
-            return new DataField(this.Template, this.Type, o.Clone());
-
-        return new DataField(this.Template, this.Type, this.Value);
-    }
-
-    public void Validate()
-    {
-        // bad inspection here
-        // ReSharper disable once ConvertIfStatementToSwitchStatement
-        if (this.Type == DataType.UNINITIALIZED)
-        {
-            throw new InvalidOperationException($"Field '{this.Template.Name}' is uninitialized");
-        }
-
-        if (this.Type == DataType.OBJECT && this.Value is DataObject dataObject)
-        {
-            if (this.Template.AllowedObjects is { Count: >0 } && 
-                !this.Template.AllowedObjects.Contains(dataObject.Template.Name))
-            {
-                throw new InvalidOperationException(
-                    $"Field '{this.Template.Name}' has object '{dataObject.Template.Name}', " + 
-                    $"which must be (but is not) one of " +
-                    $"[{string.Join(", ", this.Template.AllowedObjects)}]");
-            }
-        }
-    }
 }

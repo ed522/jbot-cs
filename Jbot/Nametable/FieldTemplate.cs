@@ -24,7 +24,9 @@ public class FieldTemplate
     internal FieldTemplate()
     {
         if (this.AllowableTypes.Contains(DataType.UNINITIALIZED))
+        {
             throw new ArgumentException("Cannot allow an uninitialized field, use NULL instead");
+        }
     }
 
     public required EnumSet<DataType> AllowableTypes { get; init; }

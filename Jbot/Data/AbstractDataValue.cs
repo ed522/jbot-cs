@@ -7,38 +7,44 @@ using JetBrains.Annotations;
 namespace Jbot.Data;
 
 /// <summary>
-/// Represents a data value, i.e. a pair consisting of a value of any valid type, and a type.
-/// User code cannot extend this class.
+///     Represents a data value, i.e. a pair consisting of a value of any valid type, and a type.
+///     User code cannot extend this class.
 /// </summary>
 [PublicAPI]
 public abstract class AbstractDataValue : ICloneable
 {
+    private object? _value;
 
     /// <summary>
-    /// Create a DataValue without any initialization. Neither the data nor the type are set. 
-    /// NOTE: Make sure to call Set() after construction to intialize the value.
+    ///     Create a DataValue without any initialization. Neither the data nor the type are set.
+    ///     NOTE: Make sure to call Set() after construction to intialize the value.
     /// </summary>
     private protected AbstractDataValue()
     {
         // does not perform initialization
     }
 
-    private object? _value;
     protected object? Value
     {
         get
         {
             if (this.Type == DataType.UNINITIALIZED)
+            {
                 return null;
+            }
+
             return this._value;
         }
         set => this._value = value;
     }
 
     public abstract DataType Type { get; protected set; }
+    public abstract object Clone();
 
     public bool IsOfType(DataType type) => this.Type == type;
     public bool IsNull() => this.Value is null;
+
+    public override string ToString() => $"{this.Type}: {this.Value}";
 
     #region Setters
 
@@ -195,8 +201,4 @@ public abstract class AbstractDataValue : ICloneable
     public BigInteger? GetAsBigInteger() => this.Value as BigInteger?;
 
     #endregion
-
-    public override string ToString() => $"{this.Type}: {this.Value}";
-    public abstract object Clone();
-
 }

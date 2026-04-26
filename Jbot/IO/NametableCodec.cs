@@ -118,14 +118,8 @@ public class NametableCodec
     private static DataType[] ParseAllowedTypesBitmap(uint bitmap)
     {
         List<DataType> types = [];
-
-        foreach (DataType type in Enum.GetValues<DataType>())
-        {
-            if ((bitmap & (1u << (int)type)) != 0)
-            {
-                types.Add(type);
-            }
-        }
+        // LINQ says: for all DataType values, select those that have their bit set in the bitmask
+        types.AddRange(Enum.GetValues<DataType>().Where(type => (bitmap & (1u << (int)type)) != 0));
 
         return [.. types];
     }
@@ -344,7 +338,8 @@ public class NametableCodec
             objects[i] = ReadObject(reader);
         }
 
-        return new Nametable.Nametable(objects, version, allowsCompression, usesChecksum, usesShortIds);
+        return new Nametable.Nametable(objects, version, allowsCompression, usesChecksum,
+            usesShortIds);
     }
 
     public static void WriteFile(string file, Nametable.Nametable nametable)

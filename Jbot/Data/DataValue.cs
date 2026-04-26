@@ -6,14 +6,12 @@ namespace Jbot.Data;
 
 public sealed class DataValue : AbstractDataValue
 {
-    public override DataType Type { get; protected set; }
-
     private DataValue(DataType type, object? value)
     {
         this.Type = type;
         this.Value = value;
     }
-    
+
     public DataValue(DataObject value) => this.Set(value);
     public DataValue(DataArray value) => this.Set(value);
     public DataValue(byte[] value) => this.Set(value);
@@ -31,11 +29,16 @@ public sealed class DataValue : AbstractDataValue
     public DataValue(double value) => this.Set(value);
     public DataValue(ScaledDecimal value) => this.Set(value);
     public DataValue(BigInteger value) => this.Set(value);
-    
+
+    public override DataType Type { get; protected set; }
+
     public override DataValue Clone()
     {
         if (this.Value is ICloneable c)
+        {
             return new DataValue(this.Type, c.Clone());
+        }
+
         return new DataValue(this.Type, this.Value);
     }
 }

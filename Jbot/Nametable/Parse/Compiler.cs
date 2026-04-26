@@ -164,7 +164,9 @@ internal static class Compiler
                             }
 
                             currentField.AllowableTypes.UnionWith(Enum.GetValues<DataType>()
-                                .Where(t => t != DataType.NULL));
+                                                                      .Where(t =>
+                                                                          t != DataType.NULL));
+
                             break;
                         }
 

@@ -9,24 +9,24 @@ public readonly struct ScaledDecimal
 
     public ScaledDecimal(BigInteger unscaledValue, int scale)
     {
-        UnscaledValue = unscaledValue;
-        Scale = scale;
+        this.UnscaledValue = unscaledValue;
+        this.Scale = scale;
     }
 
     public ScaledDecimal(decimal value)
     {
         int[] bits = decimal.GetBits(value);
-        
+
         BigInteger unscaled = (new BigInteger((uint)bits[2]) << 64) |
                               (new BigInteger((uint)bits[1]) << 32) |
-                               new BigInteger((uint)bits[0]);
+                              new BigInteger((uint)bits[0]);
 
         if ((bits[3] & 0x80000000) != 0)
         {
             unscaled = -unscaled;
         }
 
-        UnscaledValue = unscaled;
-        Scale = (bits[3] >> 16) & 0xFF;
+        this.UnscaledValue = unscaled;
+        this.Scale = (bits[3] >> 16) & 0xFF;
     }
 }
