@@ -21,7 +21,12 @@ public class FieldTemplate
         this.UseCompression = useCompression;
     }
 
-    internal FieldTemplate() { }
+    internal FieldTemplate()
+    {
+        if (this.AllowableTypes.Contains(DataType.UNINITIALIZED))
+            throw new ArgumentException("Cannot allow an uninitialized field, use NULL instead");
+    }
+
     public required EnumSet<DataType> AllowableTypes { get; init; }
     public required string Name { get; init; }
     public required ushort Id { get; init; }
