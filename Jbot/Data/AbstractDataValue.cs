@@ -29,7 +29,7 @@ public abstract class AbstractDataValue : ICloneable
         get
         {
             if (this.Type == DataType.UNINITIALIZED)
-                throw new InvalidOperationException("Value has not been initialized");
+                return null;
             return this._value;
         }
         set => this._value = value;
