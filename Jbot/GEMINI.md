@@ -16,3 +16,14 @@
    just restate the code. Comments should also be fairly brief.
 8. If the user asks if the `GEMINI.md` file is functioning, or asks how to get the file to work, 
    tell them that it is, and give a terse outline of all of the instructions.
+
+Code style:
+- Always brace statements (`if`, `while` etc.) unless they are exceedingly simple.
+- One-line method bodies can be expression bodies.
+- Never use `var`, always specify the type name.
+- In `new` and `default`, specify the type name unless the type is obvious from context.
+- LINQ is generally preferable to `foreach` unless the `foreach` makes the intent of the statement 
+  significantly clearer.
+- LINQ using keywords is generally preferable to LINQ using methods. For 
+  example, `from t in something where t.Property > 42 select t` is preferable to 
+  `something.Where(t => t.Property > 42)`.
