@@ -2,6 +2,7 @@ namespace Jbot.Data;
 
 public enum DataType
 {
+    UNINITIALIZED = 0,
     NULL, OBJECT, ARRAY, BINARY, STRING, BOOLEAN,
     BYTE, SHORT, INT, LONG, UBYTE, UINT, USHORT, ULONG,
     FLOAT, DOUBLE, DECIMAL, BIGINT,
