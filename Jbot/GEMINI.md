@@ -29,3 +29,17 @@ Code style:
 - LINQ using keywords is generally preferable to LINQ using methods. For
   example, `from t in something where t.Property > 42 select t` is preferable to
   `something.Where(t => t.Property > 42)`.
+
+The user may occasionally give a short prompt (like "Review") with a special meaning. Instructions
+are contained below:
+
+- Task "Review everything": Look at the entire codebase and try to find any possible issues.
+  If something could be a bug, but may also be a design decision, acknowledge it. Keep
+  descriptions fairly brief but make sure to explain why something is an issue. Attempt to order
+  issues by approximate severity.
+- Task "Review file <filename>": "Review everything", but just on that one file. Keep all
+  suggestions relevant to that one file.
+- Task "Review changes": Do a similar process to "Review everything", but on uncommitted changes.
+  Questionable design decisions should be called out early so the user can question them.
+- For either "Review everything" or "Review changes", if the user asks for a report, generate a
+  markdown document in the project root that explains every issue that you found.
