@@ -215,7 +215,7 @@ internal static class Resolver
     )
     {
         public bool IsConstructor { get; } = isConstructor; // TODO determine if necessary
-        public MethodBase? Method { get; } = initializer;
+        public MethodBase Method { get; } = initializer;
         public IReadOnlyDictionary<string, string> ParameterMap { get; } = parameterMap;
         public IReadOnlyDictionary<string, int> ParameterIndexMap { get; } = parameterIndexMap;
     }
