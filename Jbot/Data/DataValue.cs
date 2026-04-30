@@ -12,6 +12,7 @@ public sealed class DataValue : AbstractDataValue
         this.Value = value;
     }
 
+    public DataValue() => this.SetNull();
     public DataValue(DataObject value) => this.Set(value);
     public DataValue(DataArray value) => this.Set(value);
     public DataValue(byte[] value) => this.Set(value);

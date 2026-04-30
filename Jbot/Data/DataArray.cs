@@ -3,9 +3,9 @@ using JetBrains.Annotations;
 namespace Jbot.Data;
 
 [PublicAPI]
-public class DataArray : List<AbstractDataValue>, ICloneable
+public class DataArray() : List<AbstractDataValue>(), ICloneable
 {
-    public DataArray(IEnumerable<AbstractDataValue> values) => this.AddRange(values);
+    public DataArray(IEnumerable<AbstractDataValue> values): this() => this.AddRange(values);
 
     public object Clone() =>
         new DataArray(

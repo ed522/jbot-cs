@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 using Jbot.Model;
 
 using JetBrains.Annotations;
@@ -7,6 +9,7 @@ namespace Jbot.Data;
 [PublicAPI]
 public class DataObject
 {
+    [SetsRequiredMembers]
     public DataObject(ObjectTemplate template)
     {
         this.Template = template;
