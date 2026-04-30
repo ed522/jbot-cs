@@ -46,6 +46,8 @@ public abstract class AbstractDataValue : ICloneable
 
     public override string ToString() => $"{this.Type}: {this.Value}";
 
+    internal object? GetRawValue() => this.Value;
+
     #region Setters
 
     public void SetNull()

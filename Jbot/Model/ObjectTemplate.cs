@@ -68,7 +68,8 @@ public class ObjectTemplate
         return null;
     }
 
-    public bool HasBoundType() => this.BoundTypeNames is not null && this.BoundTypeNames.Count > 0;
+    public bool IsTypeResolved => this._boundType is not null;
+    public bool HasBoundType => this.BoundTypeNames is not null && this.BoundTypeNames.Count > 0;
 
     public FieldTemplate? GetFieldOrNull(ushort id)
     {

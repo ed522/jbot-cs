@@ -8,5 +8,5 @@ namespace Jbot.IO;
 public interface IMarshalProvider
 {
     object Unmarshal(DataObject obj);
-    DataObject ConvertDown(object obj);
+    DataObject Marshal(object obj);
 }

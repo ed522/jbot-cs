@@ -1,4 +1,6 @@
-﻿using Jbot.Data;
+﻿using System.Diagnostics.CodeAnalysis;
+
+using Jbot.Data;
 using Jbot.Model;
 
 using JetBrains.Annotations;
@@ -6,16 +8,17 @@ using JetBrains.Annotations;
 namespace Jbot.IO;
 
 [PublicAPI]
-public class Marshal
+public class Marshaller
 {
     private readonly Dictionary<ObjectTemplate, TypedMarshalProvider> _registeredProviders = [];
-
-    public Marshal()
+    private readonly ReflectingConverter _converter;
+    
+    public Marshaller()
     {
-        // empty
+        this._converter = new ReflectingConverter(this);
     }
 
-    public Marshal(
+    public Marshaller(
         Dictionary<ObjectTemplate, TypedMarshalProvider> providers
     ) : this()
     {
@@ -33,15 +36,28 @@ public class Marshal
         this._registeredProviders.Add(template, typedMarshal);
     }
 
-
-    public T Unmarshal<T>(DataObject obj)
+    /// <summary>
+    /// Convert a DataObject into a corresponding CLR object.
+    /// <h2>Note</h2>
+    /// The set of registered providers is queried first, then if no valid provider is found, the 
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <typeparam name="T">The desired result type of the conversion</typeparam>
+    /// <returns></returns>
+    [RequiresUnreferencedCode("Object binding resolution requires loading a type from a string name, which " +
+            "is not compatible with trimming.")]
+    public T Unmarshal<T>(DataObject obj) => this.Unmarshal<T>(obj, typeof(T));
+    
+    // internal version that takes a runtime type
+    [RequiresUnreferencedCode("Object binding resolution requires loading a type from a string name, which " +
+                              "is not compatible with trimming.")]
+    internal T Unmarshal<T>(DataObject obj, Type realType)
     {
         if (this._registeredProviders.TryGetValue(obj.Template, out TypedMarshalProvider marshal))
         {
             // check typing
-            Type realType = typeof(T);
 
-            // upconversion is covariant
+            // unmarshaling is covariant
             if (!marshal.TargetType.IsAssignableTo(realType))
             {
                 throw new InvalidOperationException(
@@ -64,7 +80,26 @@ public class Marshal
         }
 
         // reflectively convert
-        return ReflectingConverter.Unmarshal<T>(obj);
+        return this._converter.Unmarshal<T>(obj);
+    }
+
+    [RequiresUnreferencedCode("Object binding resolution requires loading a type from a string name, which " +
+                              "is not compatible with trimming.")]
+    internal DataObject Marshal<T>(T obj) where T : notnull
+    {
+        (ObjectTemplate? template, TypedMarshalProvider provider) =
+            (from pair in this._registeredProviders
+             where pair.Value.TargetType == obj.GetType()
+             select pair).FirstOrDefault();
+
+        if (template is not null && provider.Provider is not null)
+        {
+            return provider.Provider.Marshal(obj);
+        }
+        
+        // reflect
+        return this._converter.Marshal(obj);
+
     }
 
     public readonly struct TypedMarshalProvider(Type type, IMarshalProvider provider)

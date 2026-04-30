@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 
-using Jbot.Data;
 using Jbot.Model;
 
 namespace Jbot.IO;
@@ -94,30 +93,36 @@ internal static class Resolver
         return inits[0];
     }
 
-    public static ObjectInfo ResolveObject(DataObject obj)
+    public static ObjectInfo ResolveObject(ObjectTemplate template)
     {
         // find every needed field, make sure they're also all there
         Dictionary<string, FieldInfo> fields = [];
         Dictionary<string, PropertyInfo> props = [];
 
         // choose a valid bound type and resolve it
-        Type? objType = obj.Template.ResolveType();
+        Type? objType = template.ResolveType();
 
         if (objType is null)
         {
-            string boundTypesMsg = (obj.Template.BoundTypeNames?.Count ?? 0) > 0
+            string boundTypesMsg = (template.BoundTypeNames?.Count ?? 0) > 0
                 ? "none"
-                : string.Join(",", obj.Template.BoundTypeNames ?? []);
+                : string.Join(",", template.BoundTypeNames ?? []);
 
-            throw new InvalidOperationException($"Object {obj.Template.Name} cannot be reflectively " +
+            throw new InvalidOperationException($"Object {template.Name} cannot be reflectively " +
                                                 $"converted without a valid bound type (bound types: " +
                                                 $"{boundTypesMsg})");
         }
 
+        // ignore private fields
+        IEnumerable<FieldInfo> possibleFields = objType.GetFields(FIELD_BIND_FLAGS)
+                                                       .Where(f => !f.IsPrivate);
+
+        IEnumerable<PropertyInfo> possibleProps = objType.GetProperties(FIELD_BIND_FLAGS)
+                                                         .Where(p => p.GetGetMethod() is not null);
         // treat properties and fields the same
-        IEnumerable<MemberInfo> members =
-            objType.GetFields(FIELD_BIND_FLAGS)
-                   .Concat<MemberInfo>(objType.GetProperties(FIELD_BIND_FLAGS));
+        IEnumerable<MemberInfo> members = 
+            possibleFields.Concat<MemberInfo>(possibleProps)
+                          .Where(m => !IsTransient(m));
 
         // go through all props/fields and find a field template that binds to it
         foreach (MemberInfo member in members)
@@ -126,9 +131,9 @@ internal static class Resolver
             if (IsTransient(member)) continue;
 
             // find the name of a template that binds to this field, or null if none
-            string? key = (from f in obj.Fields.Values
-                           where f.Template.BoundMembers?.Contains(member.Name) ?? false
-                           select f.Template.Name).FirstOrDefault();
+            string? key = (from f in template.Fields
+                           where f.BoundMembers?.Contains(member.Name) ?? false
+                           select f.Name).FirstOrDefault();
 
             // if there is some field that binds to this field, assign it
             if (key is not null && member is FieldInfo fieldInfo)
@@ -151,9 +156,8 @@ internal static class Resolver
         MethodInfo[] factories =
             objType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
 
-        MethodBase? resolvedInitializer = ResolveInitializer(
-            obj.Fields.Values.Select(f => f.Template).ToArray(),
-            constructors, obj.Template.Name,
+        MethodBase? resolvedInitializer = ResolveInitializer(template.Fields.ToArray(),
+            constructors, template.Name,
             out Dictionary<string, string> map, out Dictionary<string, int> indexMap);
 
         bool isConstructor = true;
@@ -163,9 +167,8 @@ internal static class Resolver
         if (resolvedInitializer is null)
         {
             // static methods
-            resolvedInitializer = ResolveInitializer(
-                obj.Fields.Values.Select(f => f.Template).ToArray(),
-                factories, obj.Template.Name, out map, out indexMap);
+            resolvedInitializer = ResolveInitializer(template.Fields.ToArray(),
+                factories, template.Name, out map, out indexMap);
 
             isConstructor = false;
         }
@@ -198,7 +201,7 @@ internal static class Resolver
         // constructors if we've already found one
         if (resolvedInitializer is null)
         {
-            throw new InvalidOperationException($"Object {obj.Template.Name} has no valid " +
+            throw new InvalidOperationException($"Object {template.Name} has no valid " +
                                                 $"initializer");
         }
 
