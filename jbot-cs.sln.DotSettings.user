@@ -6,9 +6,9 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ASR_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2026_002E1_003Fresharper_002Dhost_003FSourcesCache_003F14939830a97c9496242b1664edddd9c7645548bce544534665f26358cfa660_003FSR_002Ecs_002Fz_003A2_002D1/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ASR_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FAppData_003FRoaming_003FJetBrains_003FRider2026_002E1_003Fresharper_002Dhost_003FSourcesCache_003F76821a72a92b7f845e9ad7971cab05798f9ee63882d2a7f4246a24c6e7e5f_003FSR_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=8dda4b07_002Da772_002D43eb_002D8fa8_002Dab794ad3e27e/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Test1 #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;NUnit3x::F1E9487D-835F-C57A-34EC-ADB200CBC8C4::net9.0::Jbot.Test.LexerTests&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;NUnit3x::F1E9487D-835F-C57A-34EC-ADB200CBC8C4::net9.0::Jbot.Test.ParserTests&lt;/TestId&gt;&#xD;
-  &lt;/TestAncestor&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=8dda4b07_002Da772_002D43eb_002D8fa8_002Dab794ad3e27e/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Test1 #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;TestAncestor&gt;
+    &lt;TestId&gt;NUnit3x::F1E9487D-835F-C57A-34EC-ADB200CBC8C4::net9.0::Jbot.Test.LexerTests&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::F1E9487D-835F-C57A-34EC-ADB200CBC8C4::net9.0::Jbot.Test.ParserTests&lt;/TestId&gt;
+  &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

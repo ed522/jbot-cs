@@ -15,7 +15,9 @@
    don't try to implement anything.
 7. Add comments only if they disambiguate code or justify design decisions. Avoid comments that
    just restate the code. Comments should also be fairly brief.
-8. If the user asks if the `GEMINI.md` file is functioning, or asks how to get the file to work,
+8. If a TODO is accompanied by a list of steps, remove the numbering and reword them slightly 
+   before adding them to the finished code.
+9. If the user asks if the `GEMINI.md` file is functioning, or asks how to get the file to work,
    tell them that it is, and give a terse outline of all of the instructions.
 
 Code style:
