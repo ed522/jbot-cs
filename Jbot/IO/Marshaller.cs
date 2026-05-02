@@ -39,7 +39,8 @@ public class Marshaller
     /// <summary>
     /// Convert a DataObject into a corresponding CLR object.
     /// <h2>Note</h2>
-    /// The set of registered providers is queried first, then if no valid provider is found, the 
+    /// The set of registered providers is queried first, then if no valid provider is found, the object is
+    /// reflectively unmarshaled.
     /// </summary>
     /// <param name="obj"></param>
     /// <typeparam name="T">The desired result type of the conversion</typeparam>
